@@ -1,5 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+
+// API Base URL - Replace with your actual backend URL
+const API_BASE_URL = "https://your-backend-api.com/api";
 
 export interface Task {
   id: string;
@@ -83,48 +87,66 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loadTasks = async () => {
     try {
-      const savedTasks = await AsyncStorage.getItem("tasks");
-      if (savedTasks) {
-        setTasks(JSON.parse(savedTasks));
+      // Try to fetch tasks from backend first
+      const response = await axios.get(`${API_BASE_URL}/tasks`);
+
+      if (response.data.success && response.data.tasks) {
+        setTasks(response.data.tasks);
+        // Also save to local storage as backup
+        await AsyncStorage.setItem(
+          "tasks",
+          JSON.stringify(response.data.tasks),
+        );
       } else {
-        // Initialize with sample tasks
-        const sampleTasks: Task[] = [
-          {
-            id: "1",
-            title: "Complete project proposal",
-            description:
-              "Finish the quarterly project proposal for the new client",
-            startDate: new Date().toISOString().split("T")[0],
-            dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-              .toISOString()
-              .split("T")[0],
-            category: "Work",
-            priority: "high",
-            isCompleted: false,
-            tags: ["urgent", "client"],
-            projectId: "2",
-            isRecurring: false,
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: "2",
-            title: "Morning workout",
-            description: "30 minutes cardio and strength training",
-            startDate: new Date().toISOString().split("T")[0],
-            category: "Health",
-            priority: "medium",
-            isCompleted: false,
-            tags: ["fitness", "routine"],
-            projectId: "3",
-            isRecurring: true,
-            recurringType: "daily",
-            createdAt: new Date().toISOString(),
-          },
-        ];
-        setTasks(sampleTasks);
+        throw new Error("Backend fetch failed");
       }
     } catch (error) {
-      console.error("Error loading tasks:", error);
+      console.error("Error loading tasks from backend:", error);
+      // Fallback to local storage
+      try {
+        const savedTasks = await AsyncStorage.getItem("tasks");
+        if (savedTasks) {
+          setTasks(JSON.parse(savedTasks));
+        } else {
+          // Initialize with sample tasks
+          const sampleTasks: Task[] = [
+            {
+              id: "1",
+              title: "Complete project proposal",
+              description:
+                "Finish the quarterly project proposal for the new client",
+              startDate: new Date().toISOString().split("T")[0],
+              dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                .toISOString()
+                .split("T")[0],
+              category: "Work",
+              priority: "high",
+              isCompleted: false,
+              tags: ["urgent", "client"],
+              projectId: "2",
+              isRecurring: false,
+              createdAt: new Date().toISOString(),
+            },
+            {
+              id: "2",
+              title: "Morning workout",
+              description: "30 minutes cardio and strength training",
+              startDate: new Date().toISOString().split("T")[0],
+              category: "Health",
+              priority: "medium",
+              isCompleted: false,
+              tags: ["fitness", "routine"],
+              projectId: "3",
+              isRecurring: true,
+              recurringType: "daily",
+              createdAt: new Date().toISOString(),
+            },
+          ];
+          setTasks(sampleTasks);
+        }
+      } catch (localError) {
+        console.error("Error loading tasks from local storage:", localError);
+      }
     }
   };
 
@@ -166,39 +188,105 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     );
   };
 
-  const addTask = (taskData: Omit<Task, "id" | "createdAt">) => {
-    const newTask: Task = {
-      ...taskData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-    };
-    setTasks((prev) => [...prev, newTask]);
+  const addTask = async (taskData: Omit<Task, "id" | "createdAt">) => {
+    try {
+      // Try to create task on backend
+      const response = await axios.post(`${API_BASE_URL}/tasks`, taskData);
+
+      if (response.data.success) {
+        const newTask = response.data.task;
+        setTasks((prev) => [...prev, newTask]);
+      } else {
+        throw new Error("Backend creation failed");
+      }
+    } catch (error) {
+      console.error("Error creating task on backend:", error);
+      // Fallback to local storage
+      const newTask: Task = {
+        ...taskData,
+        id: Date.now().toString(),
+        createdAt: new Date().toISOString(),
+      };
+      setTasks((prev) => [...prev, newTask]);
+    }
   };
 
-  const updateTask = (id: string, updates: Partial<Task>) => {
-    setTasks((prev) =>
-      prev.map((task) => (task.id === id ? { ...task, ...updates } : task)),
-    );
+  const updateTask = async (id: string, updates: Partial<Task>) => {
+    try {
+      // Try to update task on backend
+      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates);
+
+      if (response.data.success) {
+        const updatedTask = response.data.task;
+        setTasks((prev) =>
+          prev.map((task) => (task.id === id ? updatedTask : task)),
+        );
+      } else {
+        throw new Error("Backend update failed");
+      }
+    } catch (error) {
+      console.error("Error updating task on backend:", error);
+      // Fallback to local update
+      setTasks((prev) =>
+        prev.map((task) => (task.id === id ? { ...task, ...updates } : task)),
+      );
+    }
   };
 
-  const deleteTask = (id: string) => {
-    setTasks((prev) => prev.filter((task) => task.id !== id));
+  const deleteTask = async (id: string) => {
+    try {
+      // Try to delete task on backend
+      const response = await axios.delete(`${API_BASE_URL}/tasks/${id}`);
+
+      if (response.data.success) {
+        setTasks((prev) => prev.filter((task) => task.id !== id));
+      } else {
+        throw new Error("Backend deletion failed");
+      }
+    } catch (error) {
+      console.error("Error deleting task on backend:", error);
+      // Fallback to local deletion
+      setTasks((prev) => prev.filter((task) => task.id !== id));
+    }
   };
 
-  const toggleTaskComplete = (id: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              isCompleted: !task.isCompleted,
-              completedAt: !task.isCompleted
-                ? new Date().toISOString()
-                : undefined,
-            }
-          : task,
-      ),
-    );
+  const toggleTaskComplete = async (id: string) => {
+    try {
+      const task = tasks.find((t) => t.id === id);
+      if (!task) return;
+
+      const updates = {
+        isCompleted: !task.isCompleted,
+        completedAt: !task.isCompleted ? new Date().toISOString() : undefined,
+      };
+
+      // Try to update task on backend
+      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates);
+
+      if (response.data.success) {
+        setTasks((prev) =>
+          prev.map((task) => (task.id === id ? { ...task, ...updates } : task)),
+        );
+      } else {
+        throw new Error("Backend update failed");
+      }
+    } catch (error) {
+      console.error("Error toggling task completion on backend:", error);
+      // Fallback to local update
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                isCompleted: !task.isCompleted,
+                completedAt: !task.isCompleted
+                  ? new Date().toISOString()
+                  : undefined,
+              }
+            : task,
+        ),
+      );
+    }
   };
 
   const addProject = (projectData: Omit<Project, "id" | "taskCount">) => {

@@ -16,13 +16,18 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "@react-native-google-signin/google-signin": "^15.0.0",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
     "autoprefixer": "^10.4.20",
+    "axios": "^1.10.0",
     "expo": "^53.0.0",
     "expo-atlas": "^0.4.0",
+    "expo-auth-session": "~6.2.0",
     "expo-blur": "~14.1.4",
     "expo-constants": "~17.1.5",
+    "expo-crypto": "~14.1.5",
     "expo-font": "~13.3.1",
     "expo-haptics": "~14.1.4",
     "expo-image": "~2.1.6",
@@ -48,8 +53,7 @@
     "react-native-web": "^0.20.0",
     "react-native-webview": "13.13.5",
     "tailwindcss": "^3.4.17",
-    "tempo-devtools": "^2.0.108",
-    "@react-native-async-storage/async-storage": "2.1.2"
+    "tempo-devtools": "^2.0.108"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
+import { Image } from "react-native";
 
 const AuthScreen = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -20,7 +21,7 @@ const AuthScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth();
 
   const handleSubmit = async () => {
     if (!email || !password || (isSignUp && !name)) {
@@ -52,6 +53,20 @@ const AuthScreen = () => {
       }
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const success = await signInWithGoogle();
+      if (!success) {
+        Alert.alert("Error", "Google Sign-In failed");
+      }
+    } catch (error) {
+      Alert.alert("Error", "Something went wrong with Google Sign-In");
     } finally {
       setIsLoading(false);
     }
@@ -150,6 +165,31 @@ const AuthScreen = () => {
                   : "Sign In"}
             </Text>
           </TouchableOpacity>
+
+          {/* Google Sign-In Button */}
+          <View className="mt-4">
+            <View className="flex-row items-center mb-4">
+              <View className="flex-1 h-px bg-gray-300" />
+              <Text className="mx-4 text-gray-500 text-sm">or</Text>
+              <View className="flex-1 h-px bg-gray-300" />
+            </View>
+
+            <TouchableOpacity
+              className="flex-row items-center justify-center py-3 px-4 border border-gray-300 rounded-lg bg-white"
+              onPress={handleGoogleSignIn}
+              disabled={isLoading}
+            >
+              <Image
+                source={{
+                  uri: "https://developers.google.com/identity/images/g-logo.png",
+                }}
+                className="w-5 h-5 mr-3"
+              />
+              <Text className="text-gray-700 font-medium">
+                Continue with Google
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Toggle Auth Mode */}
           <View className="flex-row justify-center mt-6">

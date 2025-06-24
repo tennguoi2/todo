@@ -32,8 +32,8 @@ const SearchScreen = () => {
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
   useEffect(() => {
-    if (searchQuery.trim()) {
-      let results = searchTasks(searchQuery);
+    if (searchQuery.trim() || selectedFilter !== "all") {
+      let results = searchQuery.trim() ? searchTasks(searchQuery) : tasks;
 
       // Apply additional filters
       if (selectedFilter !== "all") {
@@ -162,21 +162,39 @@ const SearchScreen = () => {
             </Text>
 
             <View className="space-y-3">
-              <TouchableOpacity className="flex-row items-center py-3 bg-white rounded-lg px-4">
+              <TouchableOpacity
+                className="flex-row items-center py-3 bg-white rounded-lg px-4"
+                onPress={() => {
+                  setSearchQuery("all");
+                  setSelectedFilter("all");
+                }}
+              >
                 <View className="w-8 h-8 bg-red-100 rounded items-center justify-center mr-4">
                   <View className="w-4 h-4 bg-red-500 rounded" />
                 </View>
                 <Text className="text-lg text-gray-900">View All Tasks</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity className="flex-row items-center py-3 bg-white rounded-lg px-4">
+              <TouchableOpacity
+                className="flex-row items-center py-3 bg-white rounded-lg px-4"
+                onPress={() => {
+                  setSearchQuery("");
+                  setSelectedFilter("completed");
+                }}
+              >
                 <View className="w-8 h-8 bg-green-100 rounded items-center justify-center mr-4">
                   <Check size={16} color="#10B981" />
                 </View>
                 <Text className="text-lg text-gray-900">Completed Tasks</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity className="flex-row items-center py-3 bg-white rounded-lg px-4">
+              <TouchableOpacity
+                className="flex-row items-center py-3 bg-white rounded-lg px-4"
+                onPress={() => {
+                  setSearchQuery("");
+                  setSelectedFilter("high");
+                }}
+              >
                 <View className="w-8 h-8 bg-orange-100 rounded items-center justify-center mr-4">
                   <Flag size={16} color="#F59E0B" />
                 </View>
