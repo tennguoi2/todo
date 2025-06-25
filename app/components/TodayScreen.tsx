@@ -8,14 +8,23 @@ import {
   Flag,
   Calendar,
   Tag,
+  Settings,
+  BarChart3,
+  CalendarDays,
 } from "lucide-react-native";
 import { useTask } from "../contexts/TaskContext";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import TaskFormModal from "./TaskFormModal";
 
-const TodayScreen = () => {
+interface TodayScreenProps {
+  onNavigate?: (screen: string) => void;
+}
+
+const TodayScreen = ({ onNavigate }: TodayScreenProps) => {
   const { tasks, toggleTaskComplete, deleteTask, getStatistics } = useTask();
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [editingTask, setEditingTask] = useState(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
 
@@ -67,24 +76,40 @@ const TodayScreen = () => {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="bg-white px-4 py-4 border-b border-gray-100">
+      <View
+        className="px-4 py-4 border-b"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row justify-between items-center">
           <View>
-            <Text className="text-2xl font-bold text-gray-900">Today</Text>
-            <Text className="text-gray-500 text-sm">
+            <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+              Today
+            </Text>
+            <Text className="text-sm" style={{ color: colors.textSecondary }}>
               {todayTasks.length} tasks • {stats.completed} completed
             </Text>
           </View>
-          <TouchableOpacity>
-            <MoreVertical size={24} color="#6B7280" />
-          </TouchableOpacity>
+          <View className="flex-row items-center space-x-2">
+            <TouchableOpacity onPress={() => onNavigate?.("calendar")}>
+              <CalendarDays size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("statistics")}>
+              <BarChart3 size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("settings")}>
+              <Settings size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Welcome Message */}
         <View className="mt-4">
-          <Text className="text-lg text-gray-700">
+          <Text className="text-lg" style={{ color: colors.text }}>
             Good{" "}
             {new Date().getHours() < 12
               ? "morning"
@@ -99,14 +124,23 @@ const TodayScreen = () => {
       <ScrollView className="flex-1">
         {/* Today's Date */}
         <View className="px-4 py-4">
-          <Text className="text-lg font-bold text-gray-900 mb-4">
+          <Text
+            className="text-lg font-bold mb-4"
+            style={{ color: colors.text }}
+          >
             {formatDate(today)}
           </Text>
 
           {/* Tasks */}
           {todayTasks.length === 0 ? (
-            <View className="bg-white rounded-lg p-6 items-center">
-              <Text className="text-gray-500 text-center">
+            <View
+              className="rounded-lg p-6 items-center"
+              style={{ backgroundColor: colors.surface }}
+            >
+              <Text
+                className="text-center"
+                style={{ color: colors.textSecondary }}
+              >
                 No tasks for today. Tap the + button to add a new task!
               </Text>
             </View>
@@ -114,7 +148,8 @@ const TodayScreen = () => {
             todayTasks.map((task) => (
               <View
                 key={task.id}
-                className="bg-white rounded-lg p-4 mb-3 shadow-sm"
+                className="rounded-lg p-4 mb-3 shadow-sm"
+                style={{ backgroundColor: colors.surface }}
               >
                 <View className="flex-row items-start">
                   <TouchableOpacity
@@ -132,10 +167,13 @@ const TodayScreen = () => {
                     <View className="flex-row items-center mb-1">
                       <Text
                         className={`text-base font-medium ${
-                          task.isCompleted
-                            ? "text-gray-500 line-through"
-                            : "text-gray-900"
+                          task.isCompleted ? "line-through" : ""
                         }`}
+                        style={{
+                          color: task.isCompleted
+                            ? colors.textSecondary
+                            : colors.text,
+                        }}
                       >
                         {task.title}
                       </Text>
@@ -147,7 +185,10 @@ const TodayScreen = () => {
                     </View>
 
                     {task.description && (
-                      <Text className="text-gray-600 text-sm mb-2">
+                      <Text
+                        className="text-sm mb-2"
+                        style={{ color: colors.textSecondary }}
+                      >
                         {task.description}
                       </Text>
                     )}
@@ -157,7 +198,10 @@ const TodayScreen = () => {
                         {task.dueDate && (
                           <View className="flex-row items-center mr-3">
                             <Calendar size={12} color="#9CA3AF" />
-                            <Text className="text-xs text-gray-500 ml-1">
+                            <Text
+                              className="text-xs ml-1"
+                              style={{ color: colors.textSecondary }}
+                            >
                               Due: {task.dueDate}
                             </Text>
                           </View>
@@ -166,7 +210,10 @@ const TodayScreen = () => {
                         {task.tags.length > 0 && (
                           <View className="flex-row items-center">
                             <Tag size={12} color="#9CA3AF" />
-                            <Text className="text-xs text-gray-500 ml-1">
+                            <Text
+                              className="text-xs ml-1"
+                              style={{ color: colors.textSecondary }}
+                            >
                               {task.tags.slice(0, 2).join(", ")}
                             </Text>
                           </View>
@@ -178,14 +225,14 @@ const TodayScreen = () => {
                           className="p-2 mr-1"
                           onPress={() => handleEditTask(task)}
                         >
-                          <Edit size={16} color="#6B7280" />
+                          <Edit size={16} color={colors.textSecondary} />
                         </TouchableOpacity>
 
                         <TouchableOpacity
                           className="p-2"
                           onPress={() => handleDeleteTask(task.id)}
                         >
-                          <Trash2 size={16} color="#6B7280" />
+                          <Trash2 size={16} color={colors.textSecondary} />
                         </TouchableOpacity>
                       </View>
                     </View>

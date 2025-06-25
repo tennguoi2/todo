@@ -11,12 +11,21 @@ import {
   Tag,
   ChevronLeft,
   ChevronRight,
+  Settings,
+  BarChart3,
+  CalendarDays,
 } from "lucide-react-native";
 import { useTask } from "../contexts/TaskContext";
+import { useTheme } from "../contexts/ThemeContext";
 import TaskFormModal from "./TaskFormModal";
 
-const UpcomingScreen = () => {
+interface UpcomingScreenProps {
+  onNavigate?: (screen: string) => void;
+}
+
+const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
   const { tasks, toggleTaskComplete, deleteTask } = useTask();
+  const { colors } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [editingTask, setEditingTask] = useState(null);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -152,34 +161,50 @@ const UpcomingScreen = () => {
   ];
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="bg-white px-4 py-4 border-b border-gray-100">
+      <View
+        className="px-4 py-4 border-b"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row justify-between items-center">
           <View>
-            <Text className="text-2xl font-bold text-gray-900">Upcoming</Text>
-            <Text className="text-gray-500 text-sm">
+            <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+              Upcoming
+            </Text>
+            <Text className="text-sm" style={{ color: colors.textSecondary }}>
               {upcomingTasks.length} upcoming tasks
             </Text>
           </View>
-          <TouchableOpacity>
-            <MoreVertical size={24} color="#6B7280" />
-          </TouchableOpacity>
+          <View className="flex-row items-center space-x-2">
+            <TouchableOpacity onPress={() => onNavigate?.("calendar")}>
+              <CalendarDays size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("statistics")}>
+              <BarChart3 size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("settings")}>
+              <Settings size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
       <ScrollView className="flex-1">
         {/* Month Selector */}
-        <View className="bg-white px-4 py-4">
+        <View className="px-4 py-4" style={{ backgroundColor: colors.surface }}>
           <View className="flex-row items-center justify-between mb-4">
             <TouchableOpacity onPress={() => navigateMonth(-1)}>
-              <ChevronLeft size={20} color="#374151" />
+              <ChevronLeft size={20} color={colors.text} />
             </TouchableOpacity>
-            <Text className="text-xl font-bold text-gray-900">
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
               {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
             </Text>
             <TouchableOpacity onPress={() => navigateMonth(1)}>
-              <ChevronRight size={20} color="#374151" />
+              <ChevronRight size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
 
@@ -189,7 +214,8 @@ const UpcomingScreen = () => {
               {weekDays.map((day, index) => (
                 <Text
                   key={index}
-                  className="text-gray-500 text-sm font-medium w-8 text-center"
+                  className="text-sm font-medium w-8 text-center"
+                  style={{ color: colors.textSecondary }}
                 >
                   {day}
                 </Text>
@@ -212,24 +238,31 @@ const UpcomingScreen = () => {
                     style={{ width: "14.28%" }}
                   >
                     <View
-                      className={`w-7 h-7 rounded-full items-center justify-center ${
-                        isToday ? "bg-red-500" : ""
-                      }`}
+                      className="w-7 h-7 rounded-full items-center justify-center"
+                      style={{
+                        backgroundColor: isToday
+                          ? colors.primary
+                          : "transparent",
+                      }}
                     >
                       <Text
-                        className={`text-sm font-medium ${
-                          isToday
-                            ? "text-white"
+                        className="text-sm font-medium"
+                        style={{
+                          color: isToday
+                            ? "white"
                             : isCurrentMonth
-                              ? "text-gray-900"
-                              : "text-gray-400"
-                        }`}
+                              ? colors.text
+                              : colors.textSecondary,
+                        }}
                       >
                         {date.getDate()}
                       </Text>
                     </View>
                     {taskCount > 0 && (
-                      <View className="w-1 h-1 bg-red-400 rounded-full mt-1" />
+                      <View
+                        className="w-1 h-1 rounded-full mt-1"
+                        style={{ backgroundColor: colors.primary }}
+                      />
                     )}
                   </View>
                 );
@@ -241,22 +274,32 @@ const UpcomingScreen = () => {
         {/* Tasks */}
         <View className="px-4 py-4">
           {Object.keys(groupedTasks).length === 0 ? (
-            <View className="bg-white rounded-lg p-6 items-center">
-              <Text className="text-gray-500 text-center">
+            <View
+              className="rounded-lg p-6 items-center"
+              style={{ backgroundColor: colors.surface }}
+            >
+              <Text
+                className="text-center"
+                style={{ color: colors.textSecondary }}
+              >
                 No upcoming tasks. All caught up! 🎉
               </Text>
             </View>
           ) : (
             Object.entries(groupedTasks).map(([date, dateTasks]) => (
               <View key={date} className="mb-6">
-                <Text className="text-lg font-bold text-gray-900 mb-3">
+                <Text
+                  className="text-lg font-bold mb-3"
+                  style={{ color: colors.text }}
+                >
                   {formatDate(date)}
                 </Text>
 
                 {dateTasks.map((task) => (
                   <View
                     key={task.id}
-                    className="bg-white rounded-lg p-4 mb-3 shadow-sm"
+                    className="rounded-lg p-4 mb-3 shadow-sm"
+                    style={{ backgroundColor: colors.surface }}
                   >
                     <View className="flex-row items-start">
                       <TouchableOpacity
@@ -274,10 +317,13 @@ const UpcomingScreen = () => {
                         <View className="flex-row items-center mb-1">
                           <Text
                             className={`text-base font-medium ${
-                              task.isCompleted
-                                ? "text-gray-500 line-through"
-                                : "text-gray-900"
+                              task.isCompleted ? "line-through" : ""
                             }`}
+                            style={{
+                              color: task.isCompleted
+                                ? colors.textSecondary
+                                : colors.text,
+                            }}
                           >
                             {task.title}
                           </Text>
@@ -289,22 +335,36 @@ const UpcomingScreen = () => {
                         </View>
 
                         {task.description && (
-                          <Text className="text-gray-600 text-sm mb-2">
+                          <Text
+                            className="text-sm mb-2"
+                            style={{ color: colors.textSecondary }}
+                            numberOfLines={2}
+                            ellipsizeMode="tail"
+                          >
                             {task.description}
                           </Text>
                         )}
 
                         <View className="flex-row items-center justify-between">
                           <View className="flex-row items-center">
-                            <Text className="text-xs text-gray-500 mr-3">
+                            <Text
+                              className="text-xs mr-3"
+                              style={{ color: colors.textSecondary }}
+                            >
                               {task.category}
                             </Text>
 
                             {task.dueDate &&
                               task.dueDate !== task.startDate && (
                                 <View className="flex-row items-center mr-3">
-                                  <Calendar size={12} color="#9CA3AF" />
-                                  <Text className="text-xs text-gray-500 ml-1">
+                                  <Calendar
+                                    size={12}
+                                    color={colors.textSecondary}
+                                  />
+                                  <Text
+                                    className="text-xs ml-1"
+                                    style={{ color: colors.textSecondary }}
+                                  >
                                     Due: {task.dueDate}
                                   </Text>
                                 </View>
@@ -312,8 +372,11 @@ const UpcomingScreen = () => {
 
                             {task.tags.length > 0 && (
                               <View className="flex-row items-center">
-                                <Tag size={12} color="#9CA3AF" />
-                                <Text className="text-xs text-gray-500 ml-1">
+                                <Tag size={12} color={colors.textSecondary} />
+                                <Text
+                                  className="text-xs ml-1"
+                                  style={{ color: colors.textSecondary }}
+                                >
                                   {task.tags.slice(0, 2).join(", ")}
                                 </Text>
                               </View>
@@ -325,14 +388,14 @@ const UpcomingScreen = () => {
                               className="p-2 mr-1"
                               onPress={() => handleEditTask(task)}
                             >
-                              <Edit size={16} color="#6B7280" />
+                              <Edit size={16} color={colors.textSecondary} />
                             </TouchableOpacity>
 
                             <TouchableOpacity
                               className="p-2"
                               onPress={() => handleDeleteTask(task.id)}
                             >
-                              <Trash2 size={16} color="#6B7280" />
+                              <Trash2 size={16} color={colors.textSecondary} />
                             </TouchableOpacity>
                           </View>
                         </View>

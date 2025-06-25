@@ -24,14 +24,21 @@ import {
   Clock,
   Folder,
   X,
+  CalendarDays,
 } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
 import { useTask } from "../contexts/TaskContext";
+import { useTheme } from "../contexts/ThemeContext";
 
-const BrowseScreen = () => {
+interface BrowseScreenProps {
+  onNavigate?: (screen: string) => void;
+}
+
+const BrowseScreen = ({ onNavigate }: BrowseScreenProps) => {
   const { user, signOut } = useAuth();
   const { projects, getStatistics, tasks, addProject, deleteProject } =
     useTask();
+  const { colors } = useTheme();
   const stats = getStatistics();
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
@@ -40,10 +47,21 @@ const BrowseScreen = () => {
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [filterTitle, setFilterTitle] = useState("");
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     Alert.alert("Sign Out", "Are you sure you want to sign out?", [
       { text: "Cancel", style: "cancel" },
-      { text: "Sign Out", style: "destructive", onPress: signOut },
+      {
+        text: "Sign Out",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOut();
+          } catch (error) {
+            console.error("Sign out error:", error);
+            Alert.alert("Error", "Failed to sign out. Please try again.");
+          }
+        },
+      },
     ]);
   };
 
@@ -135,9 +153,15 @@ const BrowseScreen = () => {
   ];
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="bg-white px-4 py-4 border-b border-gray-100">
+      <View
+        className="px-4 py-4 border-b"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <Image
@@ -147,18 +171,29 @@ const BrowseScreen = () => {
               className="w-10 h-10 rounded-full mr-3"
             />
             <View>
-              <Text className="text-xl font-bold text-gray-900">
+              <Text
+                className="text-xl font-bold"
+                style={{ color: colors.text }}
+              >
                 {user?.name || "User"}
               </Text>
-              <Text className="text-sm text-gray-500">{user?.email}</Text>
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
+                {user?.email}
+              </Text>
             </View>
           </View>
           <View className="flex-row items-center space-x-4">
-            <TouchableOpacity>
-              <Bell size={24} color="#6B7280" />
+            <TouchableOpacity onPress={() => onNavigate?.("calendar")}>
+              <CalendarDays size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("statistics")}>
+              <BarChart3 size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("settings")}>
+              <Settings size={24} color={colors.textSecondary} />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleSignOut}>
-              <LogOut size={24} color="#6B7280" />
+              <LogOut size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -166,94 +201,150 @@ const BrowseScreen = () => {
 
       <ScrollView className="flex-1">
         {/* Statistics Overview */}
-        <View className="bg-white mt-4 mx-4 rounded-lg p-4">
-          <Text className="text-lg font-bold text-gray-900 mb-4">Overview</Text>
+        <View
+          className="mt-4 mx-4 rounded-lg p-4"
+          style={{ backgroundColor: colors.surface }}
+        >
+          <Text
+            className="text-lg font-bold mb-4"
+            style={{ color: colors.text }}
+          >
+            Overview
+          </Text>
           <View className="flex-row justify-between">
             <View className="items-center flex-1">
               <View className="w-12 h-12 bg-green-100 rounded-full items-center justify-center mb-2">
                 <CheckCircle size={24} color="#10B981" />
               </View>
-              <Text className="text-2xl font-bold text-gray-900">
+              <Text
+                className="text-2xl font-bold"
+                style={{ color: colors.text }}
+              >
                 {stats.completed}
               </Text>
-              <Text className="text-xs text-gray-500">Completed</Text>
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                Completed
+              </Text>
             </View>
 
             <View className="items-center flex-1">
               <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mb-2">
                 <Clock size={24} color="#3B82F6" />
               </View>
-              <Text className="text-2xl font-bold text-gray-900">
+              <Text
+                className="text-2xl font-bold"
+                style={{ color: colors.text }}
+              >
                 {stats.pending}
               </Text>
-              <Text className="text-xs text-gray-500">Pending</Text>
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                Pending
+              </Text>
             </View>
 
             <View className="items-center flex-1">
               <View className="w-12 h-12 bg-red-100 rounded-full items-center justify-center mb-2">
                 <Calendar size={24} color="#EF4444" />
               </View>
-              <Text className="text-2xl font-bold text-gray-900">
+              <Text
+                className="text-2xl font-bold"
+                style={{ color: colors.text }}
+              >
                 {getOverdueTasks()}
               </Text>
-              <Text className="text-xs text-gray-500">Overdue</Text>
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                Overdue
+              </Text>
             </View>
 
             <View className="items-center flex-1">
               <View className="w-12 h-12 bg-purple-100 rounded-full items-center justify-center mb-2">
                 <BarChart3 size={24} color="#8B5CF6" />
               </View>
-              <Text className="text-2xl font-bold text-gray-900">
+              <Text
+                className="text-2xl font-bold"
+                style={{ color: colors.text }}
+              >
                 {stats.total}
               </Text>
-              <Text className="text-xs text-gray-500">Total</Text>
+              <Text className="text-xs" style={{ color: colors.textSecondary }}>
+                Total
+              </Text>
             </View>
           </View>
         </View>
 
         {/* Quick Actions */}
-        <View className="bg-white mt-4 mx-4 rounded-lg">
-          <Text className="text-lg font-bold text-gray-900 px-4 py-4 border-b border-gray-100">
+        <View
+          className="mt-4 mx-4 rounded-lg"
+          style={{ backgroundColor: colors.surface }}
+        >
+          <Text
+            className="text-lg font-bold px-4 py-4 border-b"
+            style={{ color: colors.text, borderBottomColor: colors.border }}
+          >
             Quick Actions
           </Text>
 
           <TouchableOpacity
-            className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100"
+            className="flex-row items-center justify-between px-4 py-4 border-b"
+            style={{ borderBottomColor: colors.border }}
             onPress={() => showTasksByFilter("all")}
           >
             <View className="flex-row items-center">
               <View className="w-8 h-8 bg-blue-100 rounded items-center justify-center mr-3">
                 <BarChart3 size={16} color="#3B82F6" />
               </View>
-              <Text className="text-base text-gray-900">All Tasks</Text>
+              <Text className="text-base" style={{ color: colors.text }}>
+                All Tasks
+              </Text>
             </View>
-            <Text className="text-gray-500 font-medium">{stats.total}</Text>
+            <Text
+              className="font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {stats.total}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100"
+            className="flex-row items-center justify-between px-4 py-4 border-b"
+            style={{ borderBottomColor: colors.border }}
             onPress={() => showTasksByFilter("completed")}
           >
             <View className="flex-row items-center">
               <View className="w-8 h-8 bg-green-100 rounded items-center justify-center mr-3">
                 <CheckCircle size={16} color="#10B981" />
               </View>
-              <Text className="text-base text-gray-900">Completed</Text>
+              <Text className="text-base" style={{ color: colors.text }}>
+                Completed
+              </Text>
             </View>
-            <Text className="text-gray-500 font-medium">{stats.completed}</Text>
+            <Text
+              className="font-medium"
+              style={{ color: colors.textSecondary }}
+            >
+              {stats.completed}
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100"
+            className="flex-row items-center justify-between px-4 py-4 border-b"
+            style={{ borderBottomColor: colors.border }}
             onPress={() => showTasksByFilter("overdue")}
           >
             <View className="flex-row items-center">
               <View className="w-8 h-8 bg-red-100 rounded items-center justify-center mr-3">
                 <Calendar size={16} color="#EF4444" />
               </View>
-              <Text className="text-base text-gray-900">Overdue</Text>
+              <Text className="text-base" style={{ color: colors.text }}>
+                Overdue
+              </Text>
             </View>
-            <Text className="text-gray-500 font-medium">
+            <Text
+              className="font-medium"
+              style={{ color: colors.textSecondary }}
+            >
               {getOverdueTasks()}
             </Text>
           </TouchableOpacity>
@@ -265,20 +356,30 @@ const BrowseScreen = () => {
             <View className="w-8 h-8 bg-orange-100 rounded items-center justify-center mr-3">
               <Target size={16} color="#F59E0B" />
             </View>
-            <Text className="text-base text-gray-900">High Priority</Text>
+            <Text className="text-base" style={{ color: colors.text }}>
+              High Priority
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* My Projects Section */}
-        <View className="bg-white mt-4 mx-4 rounded-lg">
-          <View className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100">
-            <Text className="text-lg font-bold text-gray-900">My Projects</Text>
+        <View
+          className="mt-4 mx-4 rounded-lg"
+          style={{ backgroundColor: colors.surface }}
+        >
+          <View
+            className="flex-row items-center justify-between px-4 py-4 border-b"
+            style={{ borderBottomColor: colors.border }}
+          >
+            <Text className="text-lg font-bold" style={{ color: colors.text }}>
+              My Projects
+            </Text>
             <View className="flex-row items-center space-x-2">
-              <TouchableOpacity>
-                <Plus size={20} color="#6B7280" />
+              <TouchableOpacity onPress={() => setShowProjectModal(true)}>
+                <Plus size={20} color={colors.textSecondary} />
               </TouchableOpacity>
               <TouchableOpacity>
-                <ChevronUp size={20} color="#6B7280" />
+                <ChevronUp size={20} color={colors.textSecondary} />
               </TouchableOpacity>
             </View>
           </View>
@@ -286,7 +387,8 @@ const BrowseScreen = () => {
           {projects.map((project) => (
             <TouchableOpacity
               key={project.id}
-              className="flex-row items-center justify-between px-4 py-4 border-b border-gray-100"
+              className="flex-row items-center justify-between px-4 py-4 border-b"
+              style={{ borderBottomColor: colors.border }}
               onPress={() => showProjectTasks(project.id, project.name)}
               onLongPress={() => handleDeleteProject(project.id, project.name)}
             >
@@ -297,42 +399,71 @@ const BrowseScreen = () => {
                     style={{ backgroundColor: project.color }}
                   />
                 </View>
-                <Text className="text-base text-gray-900">{project.name}</Text>
+                <Text className="text-base" style={{ color: colors.text }}>
+                  {project.name}
+                </Text>
               </View>
-              <Text className="text-gray-500 font-medium">
+              <Text
+                className="font-medium"
+                style={{ color: colors.textSecondary }}
+              >
                 {project.taskCount}
               </Text>
             </TouchableOpacity>
           ))}
 
-          <TouchableOpacity className="flex-row items-center px-4 py-4 border-b border-gray-100">
-            <Edit size={20} color="#9CA3AF" className="mr-3" />
-            <Text className="text-base text-gray-500">Manage projects</Text>
+          <TouchableOpacity
+            className="flex-row items-center px-4 py-4 border-b"
+            style={{ borderBottomColor: colors.border }}
+          >
+            <Edit size={20} color={colors.textSecondary} className="mr-3" />
+            <Text className="text-base" style={{ color: colors.textSecondary }}>
+              Manage projects
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             className="flex-row items-center px-4 py-4"
             onPress={() => setShowProjectModal(true)}
           >
-            <Folder size={20} color="#6B7280" className="mr-3" />
-            <Text className="text-base text-gray-900">Create new project</Text>
+            <Folder size={20} color={colors.textSecondary} className="mr-3" />
+            <Text className="text-base" style={{ color: colors.text }}>
+              Create new project
+            </Text>
           </TouchableOpacity>
         </View>
 
         {/* Settings */}
-        <View className="bg-white mt-4 mx-4 mb-6 rounded-lg">
-          <Text className="text-lg font-bold text-gray-900 px-4 py-4 border-b border-gray-100">
+        <View
+          className="mt-4 mx-4 mb-6 rounded-lg"
+          style={{ backgroundColor: colors.surface }}
+        >
+          <Text
+            className="text-lg font-bold px-4 py-4 border-b"
+            style={{ color: colors.text, borderBottomColor: colors.border }}
+          >
             Settings
           </Text>
 
-          <TouchableOpacity className="flex-row items-center px-4 py-4 border-b border-gray-100">
-            <Settings size={20} color="#6B7280" className="mr-3" />
-            <Text className="text-base text-gray-900">Preferences</Text>
+          <TouchableOpacity
+            className="flex-row items-center px-4 py-4 border-b"
+            style={{ borderBottomColor: colors.border }}
+            onPress={() => onNavigate?.("settings")}
+          >
+            <Settings size={20} color={colors.textSecondary} className="mr-3" />
+            <Text className="text-base" style={{ color: colors.text }}>
+              Preferences
+            </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity className="flex-row items-center px-4 py-4 border-b border-gray-100">
-            <Bell size={20} color="#6B7280" className="mr-3" />
-            <Text className="text-base text-gray-900">Notifications</Text>
+          <TouchableOpacity
+            className="flex-row items-center px-4 py-4 border-b"
+            style={{ borderBottomColor: colors.border }}
+          >
+            <Bell size={20} color={colors.textSecondary} className="mr-3" />
+            <Text className="text-base" style={{ color: colors.text }}>
+              Notifications
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -351,24 +482,48 @@ const BrowseScreen = () => {
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <View className="flex-1 bg-white">
-          <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-            <Text className="text-xl font-bold">New Project</Text>
+        <View className="flex-1" style={{ backgroundColor: colors.background }}>
+          <View
+            className="flex-row justify-between items-center p-4 border-b"
+            style={{
+              backgroundColor: colors.surface,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
+              New Project
+            </Text>
             <TouchableOpacity onPress={() => setShowProjectModal(false)}>
-              <X size={24} color="#6B7280" />
+              <X size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <View className="p-4">
-            <Text className="text-base font-medium mb-2">Project Name</Text>
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Project Name
+            </Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-3 py-3 text-base mb-4"
+              className="border rounded-lg px-3 py-3 text-base mb-4"
+              style={{
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              }}
               placeholder="Enter project name"
               value={newProjectName}
               onChangeText={setNewProjectName}
+              placeholderTextColor={colors.textSecondary}
             />
 
-            <Text className="text-base font-medium mb-2">Color</Text>
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Color
+            </Text>
             <View className="flex-row flex-wrap mb-6">
               {projectColors.map((color) => (
                 <TouchableOpacity
@@ -387,7 +542,8 @@ const BrowseScreen = () => {
             </View>
 
             <TouchableOpacity
-              className="bg-red-500 py-4 rounded-lg items-center"
+              className="py-4 rounded-lg items-center"
+              style={{ backgroundColor: colors.primary }}
               onPress={handleCreateProject}
             >
               <Text className="text-white text-base font-semibold">
@@ -404,24 +560,39 @@ const BrowseScreen = () => {
         animationType="slide"
         presentationStyle="pageSheet"
       >
-        <View className="flex-1 bg-white">
-          <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-            <Text className="text-xl font-bold">{filterTitle}</Text>
+        <View className="flex-1" style={{ backgroundColor: colors.background }}>
+          <View
+            className="flex-row justify-between items-center p-4 border-b"
+            style={{
+              backgroundColor: colors.surface,
+              borderBottomColor: colors.border,
+            }}
+          >
+            <Text className="text-xl font-bold" style={{ color: colors.text }}>
+              {filterTitle}
+            </Text>
             <TouchableOpacity onPress={() => setShowTasksModal(false)}>
-              <X size={24} color="#6B7280" />
+              <X size={24} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
 
           <ScrollView className="flex-1 p-4">
             {filteredTasks.length === 0 ? (
               <View className="items-center justify-center py-8">
-                <Text className="text-gray-500 text-center">
+                <Text
+                  className="text-center"
+                  style={{ color: colors.textSecondary }}
+                >
                   No tasks found in this category.
                 </Text>
               </View>
             ) : (
               filteredTasks.map((task) => (
-                <View key={task.id} className="bg-gray-50 rounded-lg p-4 mb-3">
+                <View
+                  key={task.id}
+                  className="rounded-lg p-4 mb-3"
+                  style={{ backgroundColor: colors.surface }}
+                >
                   <View className="flex-row items-center mb-2">
                     <View
                       className={`w-4 h-4 rounded-full mr-3 ${
@@ -430,25 +601,37 @@ const BrowseScreen = () => {
                     />
                     <Text
                       className={`text-base font-medium flex-1 ${
-                        task.isCompleted
-                          ? "text-gray-500 line-through"
-                          : "text-gray-900"
+                        task.isCompleted ? "line-through" : ""
                       }`}
+                      style={{
+                        color: task.isCompleted
+                          ? colors.textSecondary
+                          : colors.text,
+                      }}
                     >
                       {task.title}
                     </Text>
                   </View>
                   {task.description && (
-                    <Text className="text-gray-600 text-sm mb-2 ml-7">
+                    <Text
+                      className="text-sm mb-2 ml-7"
+                      style={{ color: colors.textSecondary }}
+                    >
                       {task.description}
                     </Text>
                   )}
                   <View className="flex-row items-center ml-7">
-                    <Text className="text-xs text-gray-500 mr-3">
+                    <Text
+                      className="text-xs mr-3"
+                      style={{ color: colors.textSecondary }}
+                    >
                       {task.category}
                     </Text>
                     {task.dueDate && (
-                      <Text className="text-xs text-gray-500">
+                      <Text
+                        className="text-xs"
+                        style={{ color: colors.textSecondary }}
+                      >
                         Due: {task.dueDate}
                       </Text>
                     )}

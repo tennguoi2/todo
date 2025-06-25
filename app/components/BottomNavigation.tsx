@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
 import { Calendar, Search, Menu } from "lucide-react-native";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -8,15 +9,24 @@ interface BottomNavigationProps {
 }
 
 const BottomNavigation = ({ activeTab, onTabPress }: BottomNavigationProps) => {
+  const { colors } = useTheme();
+  const currentDay = new Date().getDate();
+
   const tabs = [
-    { id: "today", label: "Today", icon: "23" },
+    { id: "today", label: "Today", icon: currentDay.toString() },
     { id: "upcoming", label: "Upcoming", icon: Calendar },
     { id: "search", label: "Search", icon: Search },
     { id: "browse", label: "Browse", icon: Menu },
   ];
 
   return (
-    <View className="bg-white border-t border-gray-200 px-4 py-2">
+    <View
+      className="border-t px-4 py-2"
+      style={{
+        backgroundColor: colors.surface,
+        borderTopColor: colors.border,
+      }}
+    >
       <View className="flex-row justify-around items-center">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
@@ -32,40 +42,43 @@ const BottomNavigation = ({ activeTab, onTabPress }: BottomNavigationProps) => {
               <View className="items-center">
                 {tab.id === "today" ? (
                   <View
-                    className={`w-8 h-8 rounded items-center justify-center ${
-                      isActive ? "bg-red-500" : "bg-gray-200"
-                    }`}
+                    className="w-8 h-8 rounded items-center justify-center"
+                    style={{
+                      backgroundColor: isActive
+                        ? colors.primary
+                        : colors.border,
+                    }}
                   >
                     <Text
-                      className={`font-bold ${
-                        isActive ? "text-white" : "text-gray-600"
-                      }`}
+                      className="font-bold"
+                      style={{
+                        color: isActive ? "white" : colors.textSecondary,
+                      }}
                     >
-                      23
+                      {currentDay}
                     </Text>
                   </View>
                 ) : (
                   <View
-                    className={`w-8 h-8 rounded items-center justify-center ${
-                      isActive
-                        ? isSearch
-                          ? "bg-red-500"
-                          : isBrowse
-                            ? "bg-red-500"
-                            : "bg-red-500"
-                        : "bg-transparent"
-                    }`}
+                    className="w-8 h-8 rounded items-center justify-center"
+                    style={{
+                      backgroundColor: isActive
+                        ? colors.primary
+                        : "transparent",
+                    }}
                   >
                     {React.createElement(tab.icon as any, {
                       size: 20,
-                      color: isActive ? "white" : "#6B7280",
+                      color: isActive ? "white" : colors.textSecondary,
                     })}
                   </View>
                 )}
                 <Text
-                  className={`text-xs mt-1 ${
-                    isActive ? "text-red-500 font-medium" : "text-gray-500"
-                  }`}
+                  className="text-xs mt-1"
+                  style={{
+                    color: isActive ? colors.primary : colors.textSecondary,
+                    fontWeight: isActive ? "500" : "normal",
+                  }}
                 >
                   {tab.label}
                 </Text>

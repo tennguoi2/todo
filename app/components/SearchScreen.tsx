@@ -17,13 +17,22 @@ import {
   Calendar,
   Tag,
   Filter,
+  Settings,
+  BarChart3,
+  CalendarDays,
 } from "lucide-react-native";
 import { useTask } from "../contexts/TaskContext";
+import { useTheme } from "../contexts/ThemeContext";
 import TaskFormModal from "./TaskFormModal";
 
-const SearchScreen = () => {
+interface SearchScreenProps {
+  onNavigate?: (screen: string) => void;
+}
+
+const SearchScreen = ({ onNavigate }: SearchScreenProps) => {
   const { tasks, searchTasks, toggleTaskComplete, deleteTask, projects } =
     useTask();
+  const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredTasks, setFilteredTasks] = useState([]);
   const [editingTask, setEditingTask] = useState(null);
@@ -100,52 +109,80 @@ const SearchScreen = () => {
   ];
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1" style={{ backgroundColor: colors.background }}>
       {/* Header */}
-      <View className="bg-white px-4 py-4 border-b border-gray-100">
+      <View
+        className="px-4 py-4 border-b"
+        style={{
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.border,
+        }}
+      >
         <View className="flex-row justify-between items-center mb-4">
-          <Text className="text-2xl font-bold text-gray-900">Search</Text>
-          <TouchableOpacity>
-            <MoreVertical size={24} color="#6B7280" />
-          </TouchableOpacity>
+          <Text className="text-2xl font-bold" style={{ color: colors.text }}>
+            Search
+          </Text>
+          <View className="flex-row items-center space-x-2">
+            <TouchableOpacity onPress={() => onNavigate?.("calendar")}>
+              <CalendarDays size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("statistics")}>
+              <BarChart3 size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => onNavigate?.("settings")}>
+              <Settings size={24} color={colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search Bar */}
-        <View className="flex-row items-center bg-gray-100 rounded-lg px-4 py-3 mb-3">
-          <Search size={20} color="#9CA3AF" />
+        <View
+          className="flex-row items-center rounded-lg px-4 py-3 mb-3"
+          style={{ backgroundColor: colors.border }}
+        >
+          <Search size={20} color={colors.textSecondary} />
           <TextInput
-            className="flex-1 ml-3 text-base text-gray-700"
+            className="flex-1 ml-3 text-base"
+            style={{ color: colors.text }}
             placeholder="Search tasks, descriptions, tags..."
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.textSecondary}
           />
         </View>
 
         {/* Filter Dropdown */}
         <View className="relative">
           <TouchableOpacity
-            className="flex-row items-center bg-gray-100 rounded-lg px-4 py-2"
+            className="flex-row items-center rounded-lg px-4 py-2"
+            style={{ backgroundColor: colors.border }}
             onPress={() => setShowFilterDropdown(!showFilterDropdown)}
           >
-            <Filter size={16} color="#6B7280" />
-            <Text className="ml-2 text-sm text-gray-700">
+            <Filter size={16} color={colors.textSecondary} />
+            <Text className="ml-2 text-sm" style={{ color: colors.text }}>
               {filterOptions.find((f) => f.value === selectedFilter)?.label}
             </Text>
           </TouchableOpacity>
 
           {showFilterDropdown && (
-            <View className="absolute top-10 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+            <View
+              className="absolute top-10 left-0 right-0 border rounded-lg shadow-lg z-10"
+              style={{
+                backgroundColor: colors.surface,
+                borderColor: colors.border,
+              }}
+            >
               {filterOptions.map((option) => (
                 <TouchableOpacity
                   key={option.value}
-                  className="px-4 py-3 border-b border-gray-100"
+                  className="px-4 py-3 border-b"
+                  style={{ borderBottomColor: colors.border }}
                   onPress={() => {
                     setSelectedFilter(option.value);
                     setShowFilterDropdown(false);
                   }}
                 >
-                  <Text className="text-gray-800">{option.label}</Text>
+                  <Text style={{ color: colors.text }}>{option.label}</Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -157,63 +194,93 @@ const SearchScreen = () => {
         {!searchQuery.trim() ? (
           /* Recently Visited Section */
           <View>
-            <Text className="text-xl font-bold text-gray-900 mb-4">
+            <Text
+              className="text-xl font-bold mb-4"
+              style={{ color: colors.text }}
+            >
               Quick Actions
             </Text>
 
             <View className="space-y-3">
               <TouchableOpacity
-                className="flex-row items-center py-3 bg-white rounded-lg px-4"
+                className="flex-row items-center py-3 rounded-lg px-4"
+                style={{ backgroundColor: colors.surface }}
                 onPress={() => {
                   setSearchQuery("all");
                   setSelectedFilter("all");
                 }}
               >
-                <View className="w-8 h-8 bg-red-100 rounded items-center justify-center mr-4">
-                  <View className="w-4 h-4 bg-red-500 rounded" />
+                <View
+                  className="w-8 h-8 rounded items-center justify-center mr-4"
+                  style={{ backgroundColor: colors.primary + "20" }}
+                >
+                  <View
+                    className="w-4 h-4 rounded"
+                    style={{ backgroundColor: colors.primary }}
+                  />
                 </View>
-                <Text className="text-lg text-gray-900">View All Tasks</Text>
+                <Text className="text-lg" style={{ color: colors.text }}>
+                  View All Tasks
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-row items-center py-3 bg-white rounded-lg px-4"
+                className="flex-row items-center py-3 rounded-lg px-4"
+                style={{ backgroundColor: colors.surface }}
                 onPress={() => {
                   setSearchQuery("");
                   setSelectedFilter("completed");
                 }}
               >
-                <View className="w-8 h-8 bg-green-100 rounded items-center justify-center mr-4">
-                  <Check size={16} color="#10B981" />
+                <View
+                  className="w-8 h-8 rounded items-center justify-center mr-4"
+                  style={{ backgroundColor: colors.success + "20" }}
+                >
+                  <Check size={16} color={colors.success} />
                 </View>
-                <Text className="text-lg text-gray-900">Completed Tasks</Text>
+                <Text className="text-lg" style={{ color: colors.text }}>
+                  Completed Tasks
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                className="flex-row items-center py-3 bg-white rounded-lg px-4"
+                className="flex-row items-center py-3 rounded-lg px-4"
+                style={{ backgroundColor: colors.surface }}
                 onPress={() => {
                   setSearchQuery("");
                   setSelectedFilter("high");
                 }}
               >
-                <View className="w-8 h-8 bg-orange-100 rounded items-center justify-center mr-4">
-                  <Flag size={16} color="#F59E0B" />
+                <View
+                  className="w-8 h-8 rounded items-center justify-center mr-4"
+                  style={{ backgroundColor: colors.warning + "20" }}
+                >
+                  <Flag size={16} color={colors.warning} />
                 </View>
-                <Text className="text-lg text-gray-900">High Priority</Text>
+                <Text className="text-lg" style={{ color: colors.text }}>
+                  High Priority
+                </Text>
               </TouchableOpacity>
             </View>
 
             {/* Search Tips */}
-            <View className="mt-6 bg-blue-50 rounded-lg p-4">
-              <Text className="text-blue-900 font-semibold mb-2">
+            <View
+              className="mt-6 rounded-lg p-4"
+              style={{ backgroundColor: colors.primary + "10" }}
+            >
+              <Text
+                className="font-semibold mb-2"
+                style={{ color: colors.text }}
+              >
                 Search Tips:
               </Text>
-              <Text className="text-blue-800 text-sm">
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
                 • Search by task title or description
               </Text>
-              <Text className="text-blue-800 text-sm">
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
                 • Use tags to find related tasks
               </Text>
-              <Text className="text-blue-800 text-sm">
+              <Text className="text-sm" style={{ color: colors.textSecondary }}>
                 • Filter by status or priority
               </Text>
             </View>
@@ -221,14 +288,23 @@ const SearchScreen = () => {
         ) : (
           /* Search Results */
           <View>
-            <Text className="text-lg font-bold text-gray-900 mb-4">
+            <Text
+              className="text-lg font-bold mb-4"
+              style={{ color: colors.text }}
+            >
               {filteredTasks.length} result
               {filteredTasks.length !== 1 ? "s" : ""} found
             </Text>
 
             {filteredTasks.length === 0 ? (
-              <View className="bg-white rounded-lg p-6 items-center">
-                <Text className="text-gray-500 text-center">
+              <View
+                className="rounded-lg p-6 items-center"
+                style={{ backgroundColor: colors.surface }}
+              >
+                <Text
+                  className="text-center"
+                  style={{ color: colors.textSecondary }}
+                >
                   No tasks found matching your search.
                 </Text>
               </View>
@@ -236,7 +312,8 @@ const SearchScreen = () => {
               filteredTasks.map((task) => (
                 <View
                   key={task.id}
-                  className="bg-white rounded-lg p-4 mb-3 shadow-sm"
+                  className="rounded-lg p-4 mb-3 shadow-sm"
+                  style={{ backgroundColor: colors.surface }}
                 >
                   <View className="flex-row items-start">
                     <TouchableOpacity
@@ -254,10 +331,13 @@ const SearchScreen = () => {
                       <View className="flex-row items-center mb-1">
                         <Text
                           className={`text-base font-medium ${
-                            task.isCompleted
-                              ? "text-gray-500 line-through"
-                              : "text-gray-900"
+                            task.isCompleted ? "line-through" : ""
                           }`}
+                          style={{
+                            color: task.isCompleted
+                              ? colors.textSecondary
+                              : colors.text,
+                          }}
                         >
                           {task.title}
                         </Text>
@@ -269,21 +349,35 @@ const SearchScreen = () => {
                       </View>
 
                       {task.description && (
-                        <Text className="text-gray-600 text-sm mb-2">
+                        <Text
+                          className="text-sm mb-2"
+                          style={{ color: colors.textSecondary }}
+                          numberOfLines={2}
+                          ellipsizeMode="tail"
+                        >
                           {task.description}
                         </Text>
                       )}
 
                       <View className="flex-row items-center justify-between">
                         <View className="flex-row items-center">
-                          <Text className="text-xs text-gray-500 mr-3">
+                          <Text
+                            className="text-xs mr-3"
+                            style={{ color: colors.textSecondary }}
+                          >
                             {task.category}
                           </Text>
 
                           {task.dueDate && (
                             <View className="flex-row items-center mr-3">
-                              <Calendar size={12} color="#9CA3AF" />
-                              <Text className="text-xs text-gray-500 ml-1">
+                              <Calendar
+                                size={12}
+                                color={colors.textSecondary}
+                              />
+                              <Text
+                                className="text-xs ml-1"
+                                style={{ color: colors.textSecondary }}
+                              >
                                 {task.dueDate}
                               </Text>
                             </View>
@@ -291,8 +385,11 @@ const SearchScreen = () => {
 
                           {task.tags.length > 0 && (
                             <View className="flex-row items-center">
-                              <Tag size={12} color="#9CA3AF" />
-                              <Text className="text-xs text-gray-500 ml-1">
+                              <Tag size={12} color={colors.textSecondary} />
+                              <Text
+                                className="text-xs ml-1"
+                                style={{ color: colors.textSecondary }}
+                              >
                                 {task.tags.slice(0, 2).join(", ")}
                               </Text>
                             </View>
@@ -304,14 +401,14 @@ const SearchScreen = () => {
                             className="p-2 mr-1"
                             onPress={() => handleEditTask(task)}
                           >
-                            <Edit size={16} color="#6B7280" />
+                            <Edit size={16} color={colors.textSecondary} />
                           </TouchableOpacity>
 
                           <TouchableOpacity
                             className="p-2"
                             onPress={() => handleDeleteTask(task.id)}
                           >
-                            <Trash2 size={16} color="#6B7280" />
+                            <Trash2 size={16} color={colors.textSecondary} />
                           </TouchableOpacity>
                         </View>
                       </View>
