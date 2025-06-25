@@ -32,11 +32,14 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
 
   // Get upcoming tasks (excluding today)
   const upcomingTasks = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
+
     return tasks
       .filter((task) => {
         const taskDate = task.startDate || task.dueDate;
-        return taskDate && taskDate > today;
+        return taskDate && taskDate >= todayStr;
       })
       .sort((a, b) => {
         const dateA = a.startDate || a.dueDate || "";
@@ -131,7 +134,10 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
   };
 
   const getTasksForDate = (date: Date) => {
-    const dateStr = date.toISOString().split("T")[0];
+    const localDate = new Date(
+      date.getTime() - date.getTimezoneOffset() * 60000,
+    );
+    const dateStr = localDate.toISOString().split("T")[0];
     return tasks.filter((task) => {
       const taskDate = task.startDate || task.dueDate;
       return taskDate === dateStr;
@@ -226,9 +232,14 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
               {calendarDates.slice(0, 35).map((date, index) => {
                 const isCurrentMonth =
                   date.getMonth() === currentDate.getMonth();
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const localDate = new Date(
+                  date.getTime() - date.getTimezoneOffset() * 60000,
+                );
                 const isToday =
-                  date.toISOString().split("T")[0] ===
-                  new Date().toISOString().split("T")[0];
+                  localDate.toISOString().split("T")[0] ===
+                  today.toISOString().split("T")[0];
                 const taskCount = getTasksForDate(date);
 
                 return (

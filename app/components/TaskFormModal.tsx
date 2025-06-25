@@ -10,6 +10,7 @@ import {
 } from "react-native";
 import { X, Calendar, Tag, Flag, Folder, Repeat } from "lucide-react-native";
 import { useTask, Task, Project } from "../contexts/TaskContext";
+import { useTheme } from "../contexts/ThemeContext";
 
 interface TaskFormModalProps {
   visible: boolean;
@@ -25,6 +26,7 @@ const TaskFormModal = ({
   isEditing = false,
 }: TaskFormModalProps) => {
   const { addTask, updateTask, projects } = useTask();
+  const { colors } = useTheme();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -124,24 +126,42 @@ const TaskFormModal = ({
       animationType="slide"
       presentationStyle="pageSheet"
     >
-      <View className="flex-1 bg-white">
+      <View className="flex-1" style={{ backgroundColor: colors.background }}>
         {/* Header */}
-        <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-          <Text className="text-xl font-bold">
+        <View
+          className="flex-row justify-between items-center p-4 border-b"
+          style={{
+            backgroundColor: colors.surface,
+            borderBottomColor: colors.border,
+          }}
+        >
+          <Text className="text-xl font-bold" style={{ color: colors.text }}>
             {isEditing ? "Edit Task" : "New Task"}
           </Text>
           <TouchableOpacity onPress={onClose}>
-            <X size={24} color="#6B7280" />
+            <X size={24} color={colors.textSecondary} />
           </TouchableOpacity>
         </View>
 
         <ScrollView className="flex-1 p-4">
           {/* Title */}
           <View className="mb-4">
-            <Text className="text-base font-medium mb-2">Title *</Text>
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Title *
+            </Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-3 py-3 text-base"
+              className="rounded-lg px-3 py-3 text-base"
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              }}
               placeholder="Enter task title"
+              placeholderTextColor={colors.textSecondary}
               value={title}
               onChangeText={setTitle}
             />
@@ -149,10 +169,22 @@ const TaskFormModal = ({
 
           {/* Description */}
           <View className="mb-4">
-            <Text className="text-base font-medium mb-2">Description</Text>
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Description
+            </Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-3 py-3 text-base"
+              className="rounded-lg px-3 py-3 text-base"
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              }}
               placeholder="Enter task description"
+              placeholderTextColor={colors.textSecondary}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -164,24 +196,52 @@ const TaskFormModal = ({
           {/* Dates */}
           <View className="flex-row mb-4">
             <View className="flex-1 mr-2">
-              <Text className="text-base font-medium mb-2">Start Date</Text>
-              <View className="flex-row items-center border border-gray-300 rounded-lg px-3 py-3">
-                <Calendar size={20} color="#6B7280" />
+              <Text
+                className="text-base font-medium mb-2"
+                style={{ color: colors.text }}
+              >
+                Start Date
+              </Text>
+              <View
+                className="flex-row items-center rounded-lg px-3 py-3"
+                style={{
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }}
+              >
+                <Calendar size={20} color={colors.textSecondary} />
                 <TextInput
                   className="ml-2 flex-1 text-base"
+                  style={{ color: colors.text }}
                   placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.textSecondary}
                   value={startDate}
                   onChangeText={setStartDate}
                 />
               </View>
             </View>
             <View className="flex-1 ml-2">
-              <Text className="text-base font-medium mb-2">Due Date</Text>
-              <View className="flex-row items-center border border-gray-300 rounded-lg px-3 py-3">
-                <Calendar size={20} color="#6B7280" />
+              <Text
+                className="text-base font-medium mb-2"
+                style={{ color: colors.text }}
+              >
+                Due Date
+              </Text>
+              <View
+                className="flex-row items-center rounded-lg px-3 py-3"
+                style={{
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }}
+              >
+                <Calendar size={20} color={colors.textSecondary} />
                 <TextInput
                   className="ml-2 flex-1 text-base"
+                  style={{ color: colors.text }}
                   placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.textSecondary}
                   value={dueDate}
                   onChangeText={setDueDate}
                 />
@@ -191,10 +251,22 @@ const TaskFormModal = ({
 
           {/* Category */}
           <View className="mb-4">
-            <Text className="text-base font-medium mb-2">Category</Text>
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Category
+            </Text>
             <TextInput
-              className="border border-gray-300 rounded-lg px-3 py-3 text-base"
+              className="rounded-lg px-3 py-3 text-base"
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+                color: colors.text,
+              }}
               placeholder="Enter category"
+              placeholderTextColor={colors.textSecondary}
               value={category}
               onChangeText={setCategory}
             />
@@ -202,9 +274,19 @@ const TaskFormModal = ({
 
           {/* Priority */}
           <View className="mb-4">
-            <Text className="text-base font-medium mb-2">Priority</Text>
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Priority
+            </Text>
             <TouchableOpacity
-              className="flex-row items-center justify-between border border-gray-300 rounded-lg px-3 py-3"
+              className="flex-row items-center justify-between rounded-lg px-3 py-3"
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              }}
               onPress={() => setShowPriorityDropdown(!showPriorityDropdown)}
             >
               <View className="flex-row items-center">
@@ -212,25 +294,38 @@ const TaskFormModal = ({
                   size={20}
                   color={priorities.find((p) => p.value === priority)?.color}
                 />
-                <Text className="ml-2 text-base">
+                <Text className="ml-2 text-base" style={{ color: colors.text }}>
                   {priorities.find((p) => p.value === priority)?.label}
                 </Text>
               </View>
             </TouchableOpacity>
 
             {showPriorityDropdown && (
-              <View className="border border-gray-200 rounded-lg mt-1 bg-white">
+              <View
+                className="rounded-lg mt-1"
+                style={{
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }}
+              >
                 {priorities.map((p) => (
                   <TouchableOpacity
                     key={p.value}
-                    className="flex-row items-center px-3 py-3 border-b border-gray-100"
+                    className="flex-row items-center px-3 py-3 border-b"
+                    style={{ borderBottomColor: colors.border }}
                     onPress={() => {
                       setPriority(p.value as "high" | "medium" | "low");
                       setShowPriorityDropdown(false);
                     }}
                   >
                     <Flag size={20} color={p.color} />
-                    <Text className="ml-2 text-base">{p.label}</Text>
+                    <Text
+                      className="ml-2 text-base"
+                      style={{ color: colors.text }}
+                    >
+                      {p.label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -239,14 +334,24 @@ const TaskFormModal = ({
 
           {/* Project */}
           <View className="mb-4">
-            <Text className="text-base font-medium mb-2">Project</Text>
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Project
+            </Text>
             <TouchableOpacity
-              className="flex-row items-center justify-between border border-gray-300 rounded-lg px-3 py-3"
+              className="flex-row items-center justify-between rounded-lg px-3 py-3"
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              }}
               onPress={() => setShowProjectDropdown(!showProjectDropdown)}
             >
               <View className="flex-row items-center">
-                <Folder size={20} color="#6B7280" />
-                <Text className="ml-2 text-base">
+                <Folder size={20} color={colors.textSecondary} />
+                <Text className="ml-2 text-base" style={{ color: colors.text }}>
                   {projectId
                     ? projects.find((p) => p.id === projectId)?.name
                     : "Select Project"}
@@ -255,22 +360,34 @@ const TaskFormModal = ({
             </TouchableOpacity>
 
             {showProjectDropdown && (
-              <View className="border border-gray-200 rounded-lg mt-1 bg-white">
+              <View
+                className="rounded-lg mt-1"
+                style={{
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }}
+              >
                 <TouchableOpacity
-                  className="flex-row items-center px-3 py-3 border-b border-gray-100"
+                  className="flex-row items-center px-3 py-3 border-b"
+                  style={{ borderBottomColor: colors.border }}
                   onPress={() => {
                     setProjectId("");
                     setShowProjectDropdown(false);
                   }}
                 >
-                  <Text className="ml-2 text-base text-gray-500">
+                  <Text
+                    className="ml-2 text-base"
+                    style={{ color: colors.textSecondary }}
+                  >
                     No Project
                   </Text>
                 </TouchableOpacity>
                 {projects.map((project) => (
                   <TouchableOpacity
                     key={project.id}
-                    className="flex-row items-center px-3 py-3 border-b border-gray-100"
+                    className="flex-row items-center px-3 py-3 border-b"
+                    style={{ borderBottomColor: colors.border }}
                     onPress={() => {
                       setProjectId(project.id);
                       setShowProjectDropdown(false);
@@ -280,7 +397,9 @@ const TaskFormModal = ({
                       className="w-4 h-4 rounded-full mr-2"
                       style={{ backgroundColor: project.color }}
                     />
-                    <Text className="text-base">{project.name}</Text>
+                    <Text className="text-base" style={{ color: colors.text }}>
+                      {project.name}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -289,12 +408,26 @@ const TaskFormModal = ({
 
           {/* Tags */}
           <View className="mb-4">
-            <Text className="text-base font-medium mb-2">Tags</Text>
-            <View className="flex-row items-center border border-gray-300 rounded-lg px-3 py-3">
-              <Tag size={20} color="#6B7280" />
+            <Text
+              className="text-base font-medium mb-2"
+              style={{ color: colors.text }}
+            >
+              Tags
+            </Text>
+            <View
+              className="flex-row items-center rounded-lg px-3 py-3"
+              style={{
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.surface,
+              }}
+            >
+              <Tag size={20} color={colors.textSecondary} />
               <TextInput
                 className="ml-2 flex-1 text-base"
+                style={{ color: colors.text }}
                 placeholder="Enter tags separated by commas"
+                placeholderTextColor={colors.textSecondary}
                 value={tags}
                 onChangeText={setTags}
               />
@@ -304,9 +437,17 @@ const TaskFormModal = ({
           {/* Recurring */}
           <View className="mb-6">
             <View className="flex-row items-center justify-between mb-2">
-              <Text className="text-base font-medium">Recurring Task</Text>
+              <Text
+                className="text-base font-medium"
+                style={{ color: colors.text }}
+              >
+                Recurring Task
+              </Text>
               <TouchableOpacity
-                className={`w-12 h-6 rounded-full ${isRecurring ? "bg-red-500" : "bg-gray-300"}`}
+                className="w-12 h-6 rounded-full"
+                style={{
+                  backgroundColor: isRecurring ? colors.primary : colors.border,
+                }}
                 onPress={() => setIsRecurring(!isRecurring)}
               >
                 <View
@@ -317,12 +458,20 @@ const TaskFormModal = ({
 
             {isRecurring && (
               <TouchableOpacity
-                className="flex-row items-center justify-between border border-gray-300 rounded-lg px-3 py-3"
+                className="flex-row items-center justify-between rounded-lg px-3 py-3"
+                style={{
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }}
                 onPress={() => setShowRecurringDropdown(!showRecurringDropdown)}
               >
                 <View className="flex-row items-center">
-                  <Repeat size={20} color="#6B7280" />
-                  <Text className="ml-2 text-base">
+                  <Repeat size={20} color={colors.textSecondary} />
+                  <Text
+                    className="ml-2 text-base"
+                    style={{ color: colors.text }}
+                  >
                     {
                       recurringOptions.find((r) => r.value === recurringType)
                         ?.label
@@ -333,11 +482,19 @@ const TaskFormModal = ({
             )}
 
             {showRecurringDropdown && (
-              <View className="border border-gray-200 rounded-lg mt-1 bg-white">
+              <View
+                className="rounded-lg mt-1"
+                style={{
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  backgroundColor: colors.surface,
+                }}
+              >
                 {recurringOptions.map((option) => (
                   <TouchableOpacity
                     key={option.value}
-                    className="flex-row items-center px-3 py-3 border-b border-gray-100"
+                    className="flex-row items-center px-3 py-3 border-b"
+                    style={{ borderBottomColor: colors.border }}
                     onPress={() => {
                       setRecurringType(
                         option.value as "daily" | "weekly" | "monthly",
@@ -345,8 +502,13 @@ const TaskFormModal = ({
                       setShowRecurringDropdown(false);
                     }}
                   >
-                    <Repeat size={20} color="#6B7280" />
-                    <Text className="ml-2 text-base">{option.label}</Text>
+                    <Repeat size={20} color={colors.textSecondary} />
+                    <Text
+                      className="ml-2 text-base"
+                      style={{ color: colors.text }}
+                    >
+                      {option.label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -355,9 +517,16 @@ const TaskFormModal = ({
         </ScrollView>
 
         {/* Footer */}
-        <View className="p-4 border-t border-gray-200">
+        <View
+          className="p-4 border-t"
+          style={{
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
+          }}
+        >
           <TouchableOpacity
-            className="bg-red-500 py-4 rounded-lg items-center"
+            className="py-4 rounded-lg items-center"
+            style={{ backgroundColor: colors.primary }}
             onPress={handleSubmit}
           >
             <Text className="text-white text-base font-semibold">
