@@ -15,6 +15,7 @@ import TaskFormModal from "./components/TaskFormModal";
 import SettingsScreen from "./components/SettingsScreen";
 import CalendarView from "./components/CalendarView";
 import StatisticsScreen from "./components/StatisticsScreen";
+import FocusSession from "./components/FocusSession";
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState("today");
@@ -33,6 +34,9 @@ function MainApp() {
     if (currentScreen === "statistics") {
       return <StatisticsScreen onBack={() => setCurrentScreen("main")} />;
     }
+    if (currentScreen === "focus") {
+      return <FocusSession onBack={() => setCurrentScreen("main")} />;
+    }
 
     switch (activeTab) {
       case "today":
@@ -41,6 +45,9 @@ function MainApp() {
         return <UpcomingScreen onNavigate={setCurrentScreen} />;
       case "search":
         return <SearchScreen onNavigate={setCurrentScreen} />;
+      case "focus":
+        setCurrentScreen("focus");
+        return <TodayScreen onNavigate={setCurrentScreen} />;
       case "browse":
         return <BrowseScreen onNavigate={setCurrentScreen} />;
       default:

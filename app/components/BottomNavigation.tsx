@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity } from "react-native";
-import { Calendar, Search, Menu } from "lucide-react-native";
+import { Calendar, Search, Menu, Clock } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface BottomNavigationProps {
@@ -15,6 +15,7 @@ const BottomNavigation = ({ activeTab, onTabPress }: BottomNavigationProps) => {
   const tabs = [
     { id: "today", label: "Today", icon: currentDay.toString() },
     { id: "upcoming", label: "Upcoming", icon: Calendar },
+    { id: "focus", label: "Focus", icon: Clock },
     { id: "search", label: "Search", icon: Search },
     { id: "browse", label: "Browse", icon: Menu },
   ];
@@ -30,8 +31,6 @@ const BottomNavigation = ({ activeTab, onTabPress }: BottomNavigationProps) => {
       <View className="flex-row justify-around items-center">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
-          const isSearch = tab.id === "search";
-          const isBrowse = tab.id === "browse";
 
           return (
             <TouchableOpacity
