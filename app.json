@@ -32,10 +32,14 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "packagerOpts": {
+      "config": "metro.config.js"
     }
   }
 }

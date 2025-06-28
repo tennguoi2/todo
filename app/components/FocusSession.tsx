@@ -112,13 +112,11 @@ const FocusSession = ({ onBack }: FocusSessionProps) => {
 
   const loadSound = async () => {
     // Sound functionality disabled - expo-av not available
-    console.log("Sound loading disabled - expo-av not installed");
   };
 
   const playNotificationSound = async () => {
     if (settings.soundEnabled) {
       // Sound functionality disabled - expo-av not available
-      console.log("Sound playback disabled - expo-av not installed");
     }
   };
 
@@ -131,16 +129,17 @@ const FocusSession = ({ onBack }: FocusSessionProps) => {
         setTimeLeft(parsedSettings.workDuration * 60);
       }
     } catch (error) {
-      console.error("Error loading focus settings:", error);
+      // Use default settings if storage fails
+      setTimeLeft(25 * 60);
     }
   };
 
   const saveSettings = async (newSettings: FocusSettings) => {
+    setSettings(newSettings);
     try {
       await AsyncStorage.setItem("focusSettings", JSON.stringify(newSettings));
-      setSettings(newSettings);
     } catch (error) {
-      console.error("Error saving focus settings:", error);
+      // Continue with in-memory settings if storage fails
     }
   };
 
@@ -152,16 +151,16 @@ const FocusSession = ({ onBack }: FocusSessionProps) => {
         setStats(parsedStats);
       }
     } catch (error) {
-      console.error("Error loading focus stats:", error);
+      // Use default stats if storage fails
     }
   };
 
   const saveStats = async (newStats: FocusStats) => {
+    setStats(newStats);
     try {
       await AsyncStorage.setItem("focusStats", JSON.stringify(newStats));
-      setStats(newStats);
     } catch (error) {
-      console.error("Error saving focus stats:", error);
+      // Continue with in-memory stats if storage fails
     }
   };
 
