@@ -34,7 +34,7 @@ function MainApp() {
     if (currentScreen === "statistics") {
       return <StatisticsScreen onBack={() => setCurrentScreen("main")} />;
     }
-    if (currentScreen === "focus") {
+    if (currentScreen === "focusDetail") {
       return <FocusSession onBack={() => setCurrentScreen("main")} />;
     }
 
@@ -46,8 +46,7 @@ function MainApp() {
       case "search":
         return <SearchScreen onNavigate={setCurrentScreen} />;
       case "focus":
-        setCurrentScreen("focus");
-        return <TodayScreen onNavigate={setCurrentScreen} />;
+        return <FocusSession onBack={() => {}} />;
       case "browse":
         return <BrowseScreen onNavigate={setCurrentScreen} />;
       default:

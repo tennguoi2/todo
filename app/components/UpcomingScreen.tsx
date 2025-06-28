@@ -27,7 +27,7 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
   const { tasks, toggleTaskComplete, deleteTask } = useTask();
   const { colors } = useTheme();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [editingTask, setEditingTask] = useState(null);
+  const [editingTask, setEditingTask] = useState<any>(undefined);
   const [showTaskModal, setShowTaskModal] = useState(false);
 
   // Get upcoming tasks (excluding today)
@@ -114,15 +114,24 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
     const tomorrow = new Date(today);
     tomorrow.setDate(today.getDate() + 1);
 
-    const options: Intl.DateTimeFormatOptions = {
-      day: "numeric",
-      month: "short",
-      weekday: "long",
-    };
-
-    const dateStr = date.toISOString().split("T")[0];
-    const todayStr = today.toISOString().split("T")[0];
-    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+    // Sử dụng logic ngày chính xác tương tự getTasksForDate
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    const localDate = new Date(year, month, day);
+    const dateStr = localDate.toISOString().split("T")[0];
+    
+    const todayYear = today.getFullYear();
+    const todayMonth = today.getMonth();
+    const todayDay = today.getDate();
+    const todayLocalDate = new Date(todayYear, todayMonth, todayDay);
+    const todayStr = todayLocalDate.toISOString().split("T")[0];
+    
+    const tomorrowYear = tomorrow.getFullYear();
+    const tomorrowMonth = tomorrow.getMonth();
+    const tomorrowDay = tomorrow.getDate();
+    const tomorrowLocalDate = new Date(tomorrowYear, tomorrowMonth, tomorrowDay);
+    const tomorrowStr = tomorrowLocalDate.toISOString().split("T")[0];
 
     if (dateStr === todayStr) {
       return `${date.getDate()} ${date.toLocaleDateString("en-US", { month: "short" })} • Today • ${date.toLocaleDateString("en-US", { weekday: "long" })}`;
@@ -134,10 +143,15 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
   };
 
   const getTasksForDate = (date: Date) => {
-    const localDate = new Date(
-      date.getTime() - date.getTimezoneOffset() * 60000,
-    );
+    // Sử dụng timezone offset để đảm bảo ngày chính xác
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    // Tạo ngày mới với timezone local
+    const localDate = new Date(year, month, day);
     const dateStr = localDate.toISOString().split("T")[0];
+    
     return tasks.filter((task) => {
       const taskDate = task.startDate || task.dueDate;
       return taskDate === dateStr;
@@ -234,12 +248,21 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
                   date.getMonth() === currentDate.getMonth();
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const localDate = new Date(
-                  date.getTime() - date.getTimezoneOffset() * 60000,
-                );
-                const isToday =
-                  localDate.toISOString().split("T")[0] ===
-                  today.toISOString().split("T")[0];
+                
+                // Sử dụng logic ngày chính xác tương tự getTasksForDate
+                const year = date.getFullYear();
+                const month = date.getMonth();
+                const day = date.getDate();
+                const localDate = new Date(year, month, day);
+                const dateStr = localDate.toISOString().split("T")[0];
+                
+                const todayYear = today.getFullYear();
+                const todayMonth = today.getMonth();
+                const todayDay = today.getDate();
+                const todayLocalDate = new Date(todayYear, todayMonth, todayDay);
+                const todayStr = todayLocalDate.toISOString().split("T")[0];
+                
+                const isToday = dateStr === todayStr;
                 const taskCount = getTasksForDate(date);
 
                 return (
@@ -425,7 +448,7 @@ const UpcomingScreen = ({ onNavigate }: UpcomingScreenProps) => {
         visible={showTaskModal}
         onClose={() => {
           setShowTaskModal(false);
-          setEditingTask(null);
+          setEditingTask(undefined);
         }}
         task={editingTask}
         isEditing={!!editingTask}

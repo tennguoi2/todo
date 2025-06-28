@@ -351,6 +351,59 @@ const FocusSession = ({ onBack }: FocusSessionProps) => {
       </View>
 
       <ScrollView className="flex-1 px-4 py-6">
+        {/* Dashboard Overview */}
+        <View className="mb-6">
+          <Text className="text-lg font-bold mb-3" style={{ color: colors.text }}>
+            Dashboard
+          </Text>
+          <View className="flex-row space-x-3">
+            <View 
+              className="flex-1 p-3 rounded-lg items-center"
+              style={{ backgroundColor: colors.surface }}
+            >
+              <Text className="text-2xl font-bold" style={{ color: colors.primary }}>
+                {stats.todaySessions}
+              </Text>
+              <Text className="text-xs text-center" style={{ color: colors.textSecondary }}>
+                Today
+              </Text>
+            </View>
+            <View 
+              className="flex-1 p-3 rounded-lg items-center"
+              style={{ backgroundColor: colors.surface }}
+            >
+              <Text className="text-2xl font-bold" style={{ color: colors.primary }}>
+                {stats.totalSessions}
+              </Text>
+              <Text className="text-xs text-center" style={{ color: colors.textSecondary }}>
+                Total
+              </Text>
+            </View>
+            <View 
+              className="flex-1 p-3 rounded-lg items-center"
+              style={{ backgroundColor: colors.surface }}
+            >
+              <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+                {Math.floor(stats.totalFocusTime / 60)}h
+              </Text>
+              <Text className="text-xs text-center" style={{ color: colors.textSecondary }}>
+                Focus Time
+              </Text>
+            </View>
+            <View 
+              className="flex-1 p-3 rounded-lg items-center"
+              style={{ backgroundColor: colors.surface }}
+            >
+              <Text className="text-lg font-bold" style={{ color: colors.primary }}>
+                {incompleteTasks.length}
+              </Text>
+              <Text className="text-xs text-center" style={{ color: colors.textSecondary }}>
+                Tasks Left
+              </Text>
+            </View>
+          </View>
+        </View>
+
         {/* Session Info */}
         <View className="items-center mb-6">
           <Text
