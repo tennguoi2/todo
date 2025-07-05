@@ -5,6 +5,9 @@ const compression = require("compression");
 const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 
+// Initialize models first
+require("./models");
+
 const authRoutes = require("./routes/auth");
 const taskRoutes = require("./routes/tasks");
 const projectRoutes = require("./routes/projects");
@@ -61,6 +64,13 @@ app.use("/api/projects", projectRoutes);
 app.use("/api/focus", focusRoutes);
 app.use("/api/settings", settingsRoutes);
 
+// Search endpoint
+app.get(
+  "/api/search/tasks",
+  require("./middleware/auth").authenticateToken,
+  require("./controllers/taskController").getTasks,
+);
+
 // Health check
 app.get("/health", (req, res) => {
   res.json({
@@ -71,11 +81,25 @@ app.get("/health", (req, res) => {
   });
 });
 
-// Error handling
-app.use(errorHandler);
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Todo App API Server",
+    version: "1.0.0",
+    endpoints: {
+      auth: "/api/auth",
+      users: "/api/users",
+      tasks: "/api/tasks",
+      projects: "/api/projects",
+      focus: "/api/focus",
+      settings: "/api/settings",
+    },
+  });
+});
 
-// 404 handler
-app.use("*", (req, res) => {
+// 404 handler - must come before error handler
+app.use((req, res, next) => {
   res.status(404).json({
     success: false,
     error: {
@@ -84,5 +108,8 @@ app.use("*", (req, res) => {
     },
   });
 });
+
+// Error handling - must be last
+app.use(errorHandler);
 
 module.exports = app;

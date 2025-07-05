@@ -13,7 +13,7 @@ GoogleSignin.configure({
 });
 
 // API Base URL - Replace with your actual backend URL
-const API_BASE_URL = "https://your-backend-api.com/api";
+const API_BASE_URL = "http://localhost:3000/api";
 
 interface User {
   id: string;
@@ -185,12 +185,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return false;
     } catch (error) {
       console.error("Google Sign-In error:", error);
-      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
-        console.log("User cancelled the login flow");
-      } else if (error.code === statusCodes.IN_PROGRESS) {
-        console.log("Sign in is in progress already");
-      } else if (error.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
-        console.log("Play services not available");
+      if (typeof error === "object" && error && "code" in error) {
+        const err = error as { code: string };
+        if (err.code === statusCodes.SIGN_IN_CANCELLED) {
+          console.log("User cancelled the login flow");
+        } else if (err.code === statusCodes.IN_PROGRESS) {
+          console.log("Sign in is in progress already");
+        } else if (err.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) {
+          console.log("Play services not available");
+        }
       }
       return false;
     }
@@ -199,8 +202,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOut = async () => {
     try {
       // Sign out from Google if signed in with Google
-      const isSignedIn = await GoogleSignin.isSignedIn();
-      if (isSignedIn) {
+      const currentUser = await GoogleSignin.getCurrentUser();
+      if (currentUser) {
         await GoogleSignin.signOut();
       }
 

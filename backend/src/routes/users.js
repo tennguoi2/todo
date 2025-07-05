@@ -1,45 +1,68 @@
 const express = require("express");
-const { User } = require("../models");
-const { authenticateToken } = require("../middleware/auth");
-
 const router = express.Router();
 
-// All user routes require authentication
-router.use(authenticateToken);
-
-// Get current user profile
-router.get("/profile", async (req, res, next) => {
-  try {
-    res.json({
-      success: true,
-      data: req.user.toJSON(),
-      message: "User profile retrieved successfully",
-    });
-  } catch (error) {
-    next(error);
-  }
+// Test route
+router.get("/test", (req, res) => {
+  res.json({
+    success: true,
+    message: "User routes working",
+    timestamp: new Date().toISOString(),
+  });
 });
 
-// Update user profile
-router.put("/profile", async (req, res, next) => {
-  try {
-    const { name, avatar } = req.body;
-    const user = req.user;
+try {
+  const { User } = require("../models");
+  const { authenticateToken } = require("../middleware/auth");
 
-    const updates = {};
-    if (name !== undefined) updates.name = name;
-    if (avatar !== undefined) updates.avatar = avatar;
+  // All user routes require authentication
+  router.use(authenticateToken);
 
-    await user.update(updates);
+  // Get current user profile
+  router.get("/profile", async (req, res, next) => {
+    try {
+      res.json({
+        success: true,
+        data: req.user.toJSON(),
+        message: "User profile retrieved successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
 
-    res.json({
-      success: true,
-      data: user.toJSON(),
-      message: "User profile updated successfully",
+  // Update user profile
+  router.put("/profile", async (req, res, next) => {
+    try {
+      const { name, avatar } = req.body;
+      const user = req.user;
+
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (avatar !== undefined) updates.avatar = avatar;
+
+      await user.update(updates);
+
+      res.json({
+        success: true,
+        data: user.toJSON(),
+        message: "User profile updated successfully",
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+} catch (error) {
+  console.error("Error loading user models:", error.message);
+
+  router.get("/profile", (req, res) => {
+    res.status(503).json({
+      success: false,
+      error: {
+        code: "SERVICE_UNAVAILABLE",
+        message: "User service temporarily unavailable",
+      },
     });
-  } catch (error) {
-    next(error);
-  }
-});
+  });
+}
 
 module.exports = router;

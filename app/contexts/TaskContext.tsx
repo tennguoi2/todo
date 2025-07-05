@@ -3,7 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
 // API Base URL - Replace with your actual backend URL
-const API_BASE_URL = "https://your-backend-api.com/api";
+const API_BASE_URL = "http://localhost:3000/api";
 
 export interface Task {
   id: string;

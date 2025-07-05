@@ -9,8 +9,8 @@ const {
 const generateToken = (userId) => {
   return jwt.sign(
     { userId },
-    process.env.JWT_SECRET || "your_super_secret_jwt_key_here",
-    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
+    process.env.JWT_SECRET ,
+    { expiresIn: process.env.JWT_EXPIRES_IN  },
   );
 };
 

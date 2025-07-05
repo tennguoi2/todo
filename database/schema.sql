@@ -2,6 +2,8 @@
 -- Create database
 CREATE DATABASE IF NOT EXISTS todo_app;
 USE todo_app;
+select * from users;
+
 
 -- Users table
 CREATE TABLE users (
@@ -9,8 +11,8 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(255) NOT NULL,
     password_hash VARCHAR(255),
-    google_id VARCHAR(255) UNIQUE,
-    avatar VARCHAR(500),
+
+   
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -133,28 +135,3 @@ CREATE TABLE task_shares (
     INDEX idx_shared_tasks (shared_with_user_id)
 );
 
--- Insert default data
-INSERT INTO users (id, email, name, password_hash) VALUES 
-('default-user-1', 'demo@example.com', 'Demo User', '$2b$10$example_hash');
-
-INSERT INTO projects (id, user_id, name, color) VALUES 
-('default-project-1', 'default-user-1', 'Personal', '#3B82F6'),
-('default-project-2', 'default-user-1', 'Work', '#EF4444'),
-('default-project-3', 'default-user-1', 'Health', '#10B981');
-
-INSERT INTO tasks (id, user_id, project_id, title, description, start_date, due_date, category, priority) VALUES 
-('task-1', 'default-user-1', 'default-project-1', 'Learn JavaScript', 'Master the language powering the modern web', '2024-01-15', '2024-01-20', 'Education', 'high'),
-('task-2', 'default-user-1', 'default-project-2', 'Complete Project Report', 'Finish the quarterly project analysis', '2024-01-16', '2024-01-18', 'Work', 'medium'),
-('task-3', 'default-user-1', 'default-project-3', 'Morning Exercise', 'Daily 30-minute workout routine', '2024-01-15', NULL, 'Health', 'low');
-
-INSERT INTO task_tags (task_id, tag) VALUES 
-('task-1', 'programming'),
-('task-1', 'learning'),
-('task-2', 'report'),
-('task-2', 'deadline'),
-('task-3', 'fitness'),
-('task-3', 'daily');
-
-INSERT INTO focus_settings (user_id) VALUES ('default-user-1');
-INSERT INTO notification_settings (user_id) VALUES ('default-user-1');
-INSERT INTO theme_settings (user_id) VALUES ('default-user-1');
