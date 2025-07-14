@@ -18,7 +18,7 @@ const authenticateToken = async (req, res, next) => {
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "sieubimat",
+      process.env.JWT_SECRET || "fallback-secret-key-change-in-production",
     );
     const user = await User.findByPk(decoded.userId);
 

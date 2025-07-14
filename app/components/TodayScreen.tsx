@@ -31,7 +31,9 @@ const TodayScreen = ({ onNavigate }: TodayScreenProps) => {
   const today = new Date().toISOString().split("T")[0];
   const todayTasks = tasks.filter(
     (task) =>
-      task.startDate === today || (task.dueDate === today && !task.isCompleted),
+      !!task &&
+      !!task.startDate &&
+      (task.startDate === today || (task.dueDate === today && !task.isCompleted)),
   );
 
   const stats = getStatistics();

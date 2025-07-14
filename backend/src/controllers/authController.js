@@ -1,4 +1,6 @@
+// File: authController.js (đã sửa)
 const jwt = require("jsonwebtoken");
+const { Op } = require("sequelize");
 const {
   User,
   FocusSettings,
@@ -9,8 +11,8 @@ const {
 const generateToken = (userId) => {
   return jwt.sign(
     { userId },
-    process.env.JWT_SECRET ,
-    { expiresIn: process.env.JWT_EXPIRES_IN  },
+    process.env.JWT_SECRET || "fallback-secret-key-change-in-production",
+    { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
   );
 };
 
@@ -40,8 +42,22 @@ const signIn = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ where: { email } });
-    if (!user || !(await user.validatePassword(password))) {
+    // Tìm user với password_hash để có thể validate
+    const user = await User.scope('withPassword').findOne({ where: { email } });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: "INVALID_CREDENTIALS",
+          message: "Invalid email or password",
+        },
+      });
+    }
+
+    // Kiểm tra password
+    const isValidPassword = await user.validatePassword(password);
+    if (!isValidPassword) {
       return res.status(401).json({
         success: false,
         error: {
@@ -53,7 +69,7 @@ const signIn = async (req, res, next) => {
 
     const token = generateToken(user.id);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         user: user.toJSON(),
@@ -62,7 +78,8 @@ const signIn = async (req, res, next) => {
       message: "Sign in successful",
     });
   } catch (error) {
-    next(error);
+    console.error("SignIn Error:", error);
+    return next(error);
   }
 };
 
@@ -103,16 +120,15 @@ const signUp = async (req, res, next) => {
 
     const user = await User.create({
       email,
-      password_hash: password,
+      password_hash: password, // Model sẽ tự động hash password
       name,
     });
 
-    // Create default settings for the new user
     await createDefaultSettings(user.id);
 
     const token = generateToken(user.id);
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       data: {
         user: user.toJSON(),
@@ -121,7 +137,8 @@ const signUp = async (req, res, next) => {
       message: "Account created successfully",
     });
   } catch (error) {
-    next(error);
+    console.error("SignUp Error:", error);
+    return next(error);
   }
 };
 
@@ -139,22 +156,18 @@ const signInWithGoogle = async (req, res, next) => {
       });
     }
 
-    // Check if user exists by Google ID or email
+    // Tìm user theo google_id hoặc email
     let user = await User.findOne({
       where: {
-        $or: [{ google_id: googleId }, { email }],
-      },
+        [Op.or]: [
+          { google_id: googleId },
+          { email: email }
+        ]
+      }
     });
 
-    if (user) {
-      // Update Google ID if not set
-      if (!user.google_id) {
-        user.google_id = googleId;
-        user.avatar = avatar;
-        await user.save();
-      }
-    } else {
-      // Create new user
+    if (!user) {
+      // Tạo user mới nếu chưa tồn tại
       user = await User.create({
         email,
         name,
@@ -162,13 +175,15 @@ const signInWithGoogle = async (req, res, next) => {
         avatar,
       });
 
-      // Create default settings for the new user
       await createDefaultSettings(user.id);
+    } else if (!user.google_id) {
+      // Nếu user tồn tại nhưng chưa có google_id, cập nhật
+      await user.update({ google_id: googleId, avatar });
     }
 
     const token = generateToken(user.id);
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         user: user.toJSON(),
@@ -177,19 +192,23 @@ const signInWithGoogle = async (req, res, next) => {
       message: "Google sign in successful",
     });
   } catch (error) {
-    next(error);
+    console.error("Google SignIn Error:", error);
+    return next(error);
   }
 };
 
 const signOut = async (req, res, next) => {
   try {
-    // In a more sophisticated implementation, you might want to blacklist the token
-    res.json({
+    // Trong thực tế, bạn có thể muốn blacklist token
+    // hoặc thêm vào danh sách revoked tokens
+    
+    return res.json({
       success: true,
       message: "Sign out successful",
     });
   } catch (error) {
-    next(error);
+    console.error("SignOut Error:", error);
+    return next(error);
   }
 };
 

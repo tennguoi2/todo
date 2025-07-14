@@ -48,7 +48,7 @@ const AuthScreen = () => {
       if (!success) {
         Alert.alert(
           "Error",
-          isSignUp ? "Registration failed" : "Invalid credentials",
+          isSignUp ? "Registration failed. Please check your information and try again." : "Invalid email or password. Please check your credentials and try again.",
         );
       }
     } catch (error) {

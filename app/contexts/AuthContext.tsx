@@ -13,7 +13,10 @@ GoogleSignin.configure({
 });
 
 // API Base URL - Replace with your actual backend URL
-const API_BASE_URL = "http://localhost:3000/api";
+// For mobile development, use your computer's IP address instead of localhost
+// const API_BASE_URL = "http://10.0.2.2:3000/api"; // For Android emulator
+const API_BASE_URL = "http://localhost:3000/api"; // For iOS simulator
+// const API_BASE_URL = "http://YOUR_COMPUTER_IP:3000/api"; // For physical device
 
 interface User {
   id: string;
@@ -77,8 +80,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (response.data.success) {
-        const userData = response.data.user;
-        const token = response.data.token;
+        const userData = response.data.data.user;
+        const token = response.data.data.token;
 
         // Store user data and token
         await AsyncStorage.setItem("user", JSON.stringify(userData));
@@ -91,20 +94,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return true;
       }
       return false;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign in error:", error);
-      // Fallback to mock authentication for development
-      if (email && password.length >= 6) {
-        const userData = {
-          id: "1",
-          email,
-          name: email.split("@")[0],
-        };
-        await AsyncStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
-        return true;
+      
+      // Check if it's a network error or server error
+      if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response.data?.error?.message || "Invalid credentials";
+        console.error("Server error:", errorMessage);
+        return false;
+      } else if (error.request) {
+        // Network error - no response received
+        console.error("Network error:", error.message);
+        return false;
+      } else {
+        // Other error
+        console.error("Other error:", error.message);
+        return false;
       }
-      return false;
     }
   };
 
@@ -121,8 +128,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       if (response.data.success) {
-        const userData = response.data.user;
-        const token = response.data.token;
+        const userData = response.data.data.user;
+        const token = response.data.data.token;
 
         // Store user data and token
         await AsyncStorage.setItem("user", JSON.stringify(userData));
@@ -135,20 +142,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return true;
       }
       return false;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign up error:", error);
-      // Fallback to mock registration for development
-      if (email && password.length >= 6 && name) {
-        const userData = {
-          id: Date.now().toString(),
-          email,
-          name,
-        };
-        await AsyncStorage.setItem("user", JSON.stringify(userData));
-        setUser(userData);
-        return true;
+      
+      // Check if it's a network error or server error
+      if (error.response) {
+        // Server responded with error status
+        const errorMessage = error.response.data?.error?.message || "Registration failed";
+        console.error("Server error:", errorMessage);
+        return false;
+      } else if (error.request) {
+        // Network error - no response received
+        console.error("Network error:", error.message);
+        return false;
+      } else {
+        // Other error
+        console.error("Other error:", error.message);
+        return false;
       }
-      return false;
     }
   };
 
@@ -202,9 +213,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const signOut = async () => {
     try {
       // Sign out from Google if signed in with Google
-      const currentUser = await GoogleSignin.getCurrentUser();
-      if (currentUser) {
-        await GoogleSignin.signOut();
+      try {
+        const currentUser = await GoogleSignin.getCurrentUser();
+        if (currentUser) {
+          await GoogleSignin.signOut();
+        }
+      } catch (googleError) {
+        console.log("Google sign out error (non-critical):", googleError);
+        // Continue with local sign out even if Google sign out fails
       }
 
       // Clear stored data
@@ -214,9 +230,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Clear axios default header
       delete axios.defaults.headers.common["Authorization"];
 
+      // Reset user state
       setUser(null);
+      
+      console.log("Sign out successful");
     } catch (error) {
       console.error("Sign out error:", error);
+      // Even if there's an error, try to clear local state
+      try {
+        await AsyncStorage.removeItem("user");
+        await AsyncStorage.removeItem("token");
+        delete axios.defaults.headers.common["Authorization"];
+        setUser(null);
+      } catch (cleanupError) {
+        console.error("Error during cleanup:", cleanupError);
+      }
     }
   };
 

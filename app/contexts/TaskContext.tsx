@@ -2,8 +2,9 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 
-// API Base URL - Replace with your actual backend URL
-const API_BASE_URL = "http://localhost:3000/api";
+// const API_BASE_URL = "http://10.0.2.2:3000/api"; // For Android emulator
+const API_BASE_URL = "http://localhost:3000/api"; // For iOS simulator
+// const API_BASE_URL = "http://YOUR_COMPUTER_IP:3000/api"; // For physical device
 
 export interface Task {
   id: string;
@@ -87,16 +88,18 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loadTasks = async () => {
     try {
-      // Try to fetch tasks from backend first
-      const response = await axios.get(`${API_BASE_URL}/tasks`);
+      const response = await axios.get(`${API_BASE_URL}/tasks`, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      });
 
-      if (response.data.success && response.data.tasks) {
-        setTasks(response.data.tasks);
-        // Also save to local storage as backup
-        await AsyncStorage.setItem(
-          "tasks",
-          JSON.stringify(response.data.tasks),
+      if (response.data.success && Array.isArray(response.data.data)) {
+        const validTasks = response.data.data.filter((task: any) =>
+          task && task.startDate && task.title
         );
+        setTasks(validTasks);
+        await AsyncStorage.setItem("tasks", JSON.stringify(validTasks));
       } else {
         throw new Error("Backend fetch failed");
       }
@@ -106,46 +109,17 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const savedTasks = await AsyncStorage.getItem("tasks");
         if (savedTasks) {
-          setTasks(JSON.parse(savedTasks));
+          const parsedTasks = JSON.parse(savedTasks);
+          const validTasks = Array.isArray(parsedTasks)
+            ? parsedTasks.filter((task: any) => task && task.startDate && task.title)
+            : [];
+          setTasks(validTasks);
         } else {
-          // Initialize with sample tasks
-          const sampleTasks: Task[] = [
-            {
-              id: "1",
-              title: "Complete project proposal",
-              description:
-                "Finish the quarterly project proposal for the new client",
-              startDate: new Date().toISOString().split("T")[0],
-              dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                .toISOString()
-                .split("T")[0],
-              category: "Work",
-              priority: "high",
-              isCompleted: false,
-              tags: ["urgent", "client"],
-              projectId: "2",
-              isRecurring: false,
-              createdAt: new Date().toISOString(),
-            },
-            {
-              id: "2",
-              title: "Morning workout",
-              description: "30 minutes cardio and strength training",
-              startDate: new Date().toISOString().split("T")[0],
-              category: "Health",
-              priority: "medium",
-              isCompleted: false,
-              tags: ["fitness", "routine"],
-              projectId: "3",
-              isRecurring: true,
-              recurringType: "daily",
-              createdAt: new Date().toISOString(),
-            },
-          ];
-          setTasks(sampleTasks);
+          setTasks([]); // Nếu không có gì trong local storage, set mảng rỗng
         }
       } catch (localError) {
         console.error("Error loading tasks from local storage:", localError);
+        setTasks([]); // Nếu lỗi, set mảng rỗng
       }
     }
   };
@@ -182,7 +156,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       prevProjects.map((project) => ({
         ...project,
         taskCount: tasks.filter(
-          (task) => task.projectId === project.id && !task.isCompleted,
+          (task) => task.projectId === project.id && !task.isCompleted
         ).length,
       })),
     );
@@ -190,8 +164,17 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const addTask = async (taskData: Omit<Task, "id" | "createdAt">) => {
     try {
+      // Validate required fields
+      if (!taskData.title || !taskData.startDate) {
+        throw new Error("Title and start date are required");
+      }
+
       // Try to create task on backend
-      const response = await axios.post(`${API_BASE_URL}/tasks`, taskData);
+      const response = await axios.post(`${API_BASE_URL}/tasks`, taskData, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      });
 
       if (response.data.success) {
         const newTask = response.data.task;
@@ -214,7 +197,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateTask = async (id: string, updates: Partial<Task>) => {
     try {
       // Try to update task on backend
-      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates);
+      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      });
 
       if (response.data.success) {
         const updatedTask = response.data.task;
@@ -236,7 +223,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const deleteTask = async (id: string) => {
     try {
       // Try to delete task on backend
-      const response = await axios.delete(`${API_BASE_URL}/tasks/${id}`);
+      const response = await axios.delete(`${API_BASE_URL}/tasks/${id}`, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      });
 
       if (response.data.success) {
         setTasks((prev) => prev.filter((task) => task.id !== id));
@@ -261,7 +252,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       };
 
       // Try to update task on backend
-      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates);
+      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates, {
+        headers: {
+          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+        },
+      });
 
       if (response.data.success) {
         setTasks((prev) =>
@@ -300,9 +295,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const updateProject = (id: string, updates: Partial<Project>) => {
     setProjects((prev) =>
-      prev.map((project) =>
-        project.id === id ? { ...project, ...updates } : project,
-      ),
+      prev.map((project) => (project.id === id ? { ...project, ...updates } : project)),
     );
   };
 
@@ -310,9 +303,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     setProjects((prev) => prev.filter((project) => project.id !== id));
     // Remove project reference from tasks
     setTasks((prev) =>
-      prev.map((task) =>
-        task.projectId === id ? { ...task, projectId: undefined } : task,
-      ),
+      prev.map((task) => (task.projectId === id ? { ...task, projectId: undefined } : task)),
     );
   };
 
@@ -339,10 +330,13 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const getStatistics = () => {
-    const completed = tasks.filter((task) => task.isCompleted).length;
-    const pending = tasks.filter((task) => !task.isCompleted).length;
-    const total = tasks.length;
-    const overdue = tasks.filter((task) => {
+    // Add safety check for tasks with missing properties
+    const validTasks = tasks.filter(task => task && typeof task.isCompleted === 'boolean');
+
+    const completed = validTasks.filter((task) => task.isCompleted).length;
+    const pending = validTasks.filter((task) => !task.isCompleted).length;
+    const total = validTasks.length;
+    const overdue = validTasks.filter((task) => {
       if (!task.dueDate || task.isCompleted) return false;
       return new Date(task.dueDate) < new Date();
     }).length;

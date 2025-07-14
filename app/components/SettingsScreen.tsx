@@ -21,6 +21,7 @@ import {
   HelpCircle,
   X,
   Save,
+  LogOut,
 } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNotification } from "../contexts/NotificationContext";
@@ -33,7 +34,7 @@ interface SettingsScreenProps {
 const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
   const { theme, setTheme, colors, isDark } = useTheme();
   const { settings, updateSettings } = useNotification();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [tempReminderTime, setTempReminderTime] = useState(
@@ -55,6 +56,29 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
       dailyReminderTime: tempDailyTime,
     });
     setShowNotificationModal(false);
+  };
+
+  const handleSignOut = async () => {
+    Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
+      { text: "Hủy", style: "cancel" },
+      {
+        text: "Đăng xuất",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await signOut();
+            // Success - user will be redirected to login screen automatically
+          } catch (error) {
+            console.error("Sign out error:", error);
+            Alert.alert(
+              "Lỗi", 
+              "Không thể đăng xuất. Vui lòng thử lại.",
+              [{ text: "OK" }]
+            );
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -252,6 +276,16 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
             <HelpCircle size={20} color={colors.textSecondary} />
             <Text className="ml-3 font-medium" style={{ color: colors.text }}>
               Help & Support
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            className="flex-row items-center py-3"
+            onPress={handleSignOut}
+          >
+            <LogOut size={20} color={colors.textSecondary} />
+            <Text className="ml-3 font-medium" style={{ color: colors.text }}>
+              Sign Out
             </Text>
           </TouchableOpacity>
         </View>

@@ -27,7 +27,7 @@ import {
   CalendarDays,
 } from "lucide-react-native";
 import { useAuth } from "../contexts/AuthContext";
-import { useTask } from "../contexts/TaskContext";
+import { useTask, Task } from "../contexts/TaskContext";
 import { useTheme } from "../contexts/ThemeContext";
 
 interface BrowseScreenProps {
@@ -44,21 +44,28 @@ const BrowseScreen = ({ onNavigate }: BrowseScreenProps) => {
   const [newProjectName, setNewProjectName] = useState("");
   const [selectedColor, setSelectedColor] = useState("#3B82F6");
   const [showTasksModal, setShowTasksModal] = useState(false);
-  const [filteredTasks, setFilteredTasks] = useState([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [filterTitle, setFilterTitle] = useState("");
 
   const handleSignOut = async () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
+    Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
+      { text: "Hủy", style: "cancel" },
       {
-        text: "Sign Out",
+        text: "Đăng xuất",
         style: "destructive",
         onPress: async () => {
           try {
+            // Show loading state if needed
             await signOut();
+            // Success - user will be redirected to login screen automatically
+            // No need to show success message as the app will navigate to auth screen
           } catch (error) {
             console.error("Sign out error:", error);
-            Alert.alert("Error", "Failed to sign out. Please try again.");
+            Alert.alert(
+              "Lỗi", 
+              "Không thể đăng xuất. Vui lòng thử lại.",
+              [{ text: "OK" }]
+            );
           }
         },
       },
@@ -73,7 +80,7 @@ const BrowseScreen = ({ onNavigate }: BrowseScreenProps) => {
   };
 
   const showTasksByFilter = (filter: string) => {
-    let filtered = [];
+    let filtered: Task[] = [];
     let title = "";
 
     switch (filter) {
