@@ -88,9 +88,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loadTasks = async () => {
     try {
+      const token = await AsyncStorage.getItem("token");
+      console.log("[TaskContext] Token when loading tasks:", token); // Debug log
       const response = await axios.get(`${API_BASE_URL}/tasks`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -170,9 +172,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Try to create task on backend
+      const token = await AsyncStorage.getItem("token");
+      console.log("[TaskContext] Token when adding task:", token); // Debug log
       const response = await axios.post(`${API_BASE_URL}/tasks`, taskData, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -197,9 +201,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateTask = async (id: string, updates: Partial<Task>) => {
     try {
       // Try to update task on backend
+      const token = await AsyncStorage.getItem("token");
+      console.log("[TaskContext] Token when updating task:", token); // Debug log
       const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -223,9 +229,11 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const deleteTask = async (id: string) => {
     try {
       // Try to delete task on backend
+      const token = await AsyncStorage.getItem("token");
+      console.log("[TaskContext] Token when deleting task:", token); // Debug log
       const response = await axios.delete(`${API_BASE_URL}/tasks/${id}`, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -246,6 +254,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       const task = tasks.find((t) => t.id === id);
       if (!task) return;
 
+      const token = await AsyncStorage.getItem("token");
+      console.log("[TaskContext] Token when toggling task complete:", token); // Debug log
       const updates = {
         isCompleted: !task.isCompleted,
         completedAt: !task.isCompleted ? new Date().toISOString() : undefined,
@@ -254,7 +264,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       // Try to update task on backend
       const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates, {
         headers: {
-          Authorization: `Bearer ${await AsyncStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 

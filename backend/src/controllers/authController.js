@@ -199,16 +199,39 @@ const signInWithGoogle = async (req, res, next) => {
 
 const signOut = async (req, res, next) => {
   try {
-    // Trong thực tế, bạn có thể muốn blacklist token
-    // hoặc thêm vào danh sách revoked tokens
-    
+    // Log the signout attempt
+    console.log("User signing out");
+
+    // Optionally, you can get user info from token if it's still valid
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret-key-change-in-production");
+        console.log(`User ${decoded.userId} signed out successfully`);
+      } catch (tokenError) {
+        // Token is invalid or expired, but that's okay for signout
+        console.log("Signing out with invalid/expired token");
+      }
+    }
+
+    // In a production app, you might want to:
+    // 1. Add the token to a blacklist/revoked tokens list
+    // 2. Clear any server-side sessions
+    // 3. Log the signout event for security purposes
+
     return res.json({
       success: true,
       message: "Sign out successful",
     });
   } catch (error) {
     console.error("SignOut Error:", error);
-    return next(error);
+    // Even if there's an error, we should still return success
+    // because the client will clear local storage anyway
+    return res.json({
+      success: true,
+      message: "Sign out completed",
+    });
   }
 };
 

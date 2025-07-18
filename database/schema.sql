@@ -3,6 +3,7 @@
 CREATE DATABASE IF NOT EXISTS todo_app;
 USE todo_app;
 select * from tasks ;
+select * from users ;
 
 
 -- Users table

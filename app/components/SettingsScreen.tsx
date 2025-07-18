@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import {
   ArrowLeft,
@@ -37,6 +38,7 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
   const { user, signOut } = useAuth();
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [tempReminderTime, setTempReminderTime] = useState(
     settings.reminderTime.toString(),
   );
@@ -59,26 +61,71 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
   };
 
   const handleSignOut = async () => {
+    if (isSigningOut) return; // Prevent multiple signout attempts
+
     Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
       { text: "Hủy", style: "cancel" },
       {
         text: "Đăng xuất",
         style: "destructive",
         onPress: async () => {
+          setIsSigningOut(true);
+          console.log("Starting sign out process...");
+
           try {
+            console.log("Calling signOut function...");
             await signOut();
+            console.log("Sign out successful");
             // Success - user will be redirected to login screen automatically
           } catch (error) {
-            console.error("Sign out error:", error);
+            console.error("Sign out error details:", error);
+            console.error("Error message:", error.message);
+            console.error("Error stack:", error.stack);
+
+            // Show more detailed error information
+            const errorMessage = error.message || "Không thể đăng xuất. Vui lòng thử lại.";
+            
             Alert.alert(
-              "Lỗi", 
-              "Không thể đăng xuất. Vui lòng thử lại.",
-              [{ text: "OK" }]
+              "Lỗi đăng xuất",
+              `Chi tiết lỗi: ${errorMessage}\n\nBạn có muốn thử đăng xuất cưỡng bức không?`,
+              [
+                { text: "Hủy", style: "cancel" },
+                { 
+                  text: "Đăng xuất cưỡng bức", 
+                  style: "destructive",
+                  onPress: () => forceSignOut()
+                }
+              ]
             );
+          } finally {
+            setIsSigningOut(false);
           }
         },
       },
     ]);
+  };
+
+  const forceSignOut = async () => {
+    try {
+      console.log("Force signing out...");
+      // Try to clear local storage manually if signOut fails
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.multiRemove(['userToken', 'userData', 'googleToken']);
+      
+      // Force reload the app or navigate to login
+      Alert.alert(
+        "Đăng xuất thành công",
+        "Vui lòng khởi động lại ứng dụng.",
+        [{ text: "OK" }]
+      );
+    } catch (error) {
+      console.error("Force sign out error:", error);
+      Alert.alert(
+        "Lỗi nghiêm trọng",
+        "Không thể đăng xuất. Vui lòng xóa và cài đặt lại ứng dụng.",
+        [{ text: "OK" }]
+      );
+    }
   };
 
   return (
@@ -233,9 +280,7 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                 updateSettings({ dailyReminder: value })
               }
               trackColor={{ false: colors.border, true: colors.primary }}
-              thumbColor={
-                settings.dailyReminder ? "white" : colors.textSecondary
-              }
+              thumbColor={settings.dailyReminder ? "white" : colors.textSecondary}
             />
           </View>
 
@@ -280,13 +325,20 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
           </TouchableOpacity>
 
           <TouchableOpacity
-            className="flex-row items-center py-3"
+            className="flex-row items-center justify-between py-3"
             onPress={handleSignOut}
+            disabled={isSigningOut}
+            style={{ opacity: isSigningOut ? 0.6 : 1 }}
           >
-            <LogOut size={20} color={colors.textSecondary} />
-            <Text className="ml-3 font-medium" style={{ color: colors.text }}>
-              Sign Out
-            </Text>
+            <View className="flex-row items-center">
+              <LogOut size={20} color={colors.textSecondary} />
+              <Text className="ml-3 font-medium" style={{ color: colors.text }}>
+                Sign Out
+              </Text>
+            </View>
+            {isSigningOut && (
+              <ActivityIndicator size="small" color={colors.primary} />
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>

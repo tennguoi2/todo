@@ -1,5 +1,8 @@
 const express = require("express");
+
 const router = express.Router();
+const authController = require('../controllers/authController');
+const authMiddleware = require('../middleware/auth'); // if you have one
 
 // Test route
 router.get("/test", (req, res) => {
@@ -9,6 +12,11 @@ router.get("/test", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+// Public routes (no auth required)
+router.post('/signin', authController.signIn);
+router.post('/signup', authController.signUp);
+router.post('/google', authController.signInWithGoogle);
+router.post('/signout', authController.signOut); // No auth middleware here!
 
 try {
   const {
@@ -18,6 +26,8 @@ try {
     signOut,
   } = require("../controllers/authController");
   const { authenticateToken } = require("../middleware/auth");
+// Protected routes (auth required)
+// router.get('/profile', authMiddleware, authController.getProfile);
 
   // Public routes
   router.post("/signin", signIn);

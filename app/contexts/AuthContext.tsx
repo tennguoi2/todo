@@ -55,6 +55,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     checkAuthState();
   }, []);
 
+  useEffect(() => {
+    // Interceptor để tự động đăng xuất khi gặp 401
+    const interceptor = axios.interceptors.response.use(
+      response => response,
+      async error => {
+        if (error.response && error.response.status === 401) {
+          try {
+            await signOut();
+          } catch (e) {
+            // ignore
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   const checkAuthState = async () => {
     try {
       const userData = await AsyncStorage.getItem("user");
@@ -211,40 +231,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signOut = async () => {
+    let backendError = null;
     try {
-      // Sign out from Google if signed in with Google
-      try {
-        const currentUser = await GoogleSignin.getCurrentUser();
-        if (currentUser) {
-          await GoogleSignin.signOut();
-        }
-      } catch (googleError) {
-        console.log("Google sign out error (non-critical):", googleError);
-        // Continue with local sign out even if Google sign out fails
-      }
-
-      // Clear stored data
-      await AsyncStorage.removeItem("user");
-      await AsyncStorage.removeItem("token");
-
-      // Clear axios default header
-      delete axios.defaults.headers.common["Authorization"];
-
-      // Reset user state
-      setUser(null);
-      
-      console.log("Sign out successful");
+      // Call the backend signout endpoint
+      await axios.post(`${API_BASE_URL}/auth/signout`);
     } catch (error) {
-      console.error("Sign out error:", error);
-      // Even if there's an error, try to clear local state
-      try {
-        await AsyncStorage.removeItem("user");
-        await AsyncStorage.removeItem("token");
-        delete axios.defaults.headers.common["Authorization"];
-        setUser(null);
-      } catch (cleanupError) {
-        console.error("Error during cleanup:", cleanupError);
+      backendError = error;
+      console.error("Sign out error (backend):", error);
+    }
+    // Google sign out (không critical)
+    try {
+      const currentUser = await GoogleSignin.getCurrentUser();
+      if (currentUser) {
+        await GoogleSignin.signOut();
       }
+    } catch (googleError) {
+      console.log("Google sign out error (non-critical):", googleError);
+    }
+    // Xóa tất cả các key liên quan
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.multiRemove(['user', 'token', 'userToken', 'userData', 'googleToken']);
+      delete axios.defaults.headers.common["Authorization"];
+      setUser(null);
+      console.log("Sign out cleanup done");
+    } catch (cleanupError) {
+      console.error("Error during cleanup:", cleanupError);
+    }
+    if (backendError) {
+      throw backendError;
     }
   };
 
