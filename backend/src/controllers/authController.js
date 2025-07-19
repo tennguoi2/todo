@@ -199,26 +199,41 @@ const signInWithGoogle = async (req, res, next) => {
 
 const signOut = async (req, res, next) => {
   try {
-    // Log the signout attempt
-    console.log("User signing out");
+    console.log("Processing signout request");
 
-    // Optionally, you can get user info from token if it's still valid
+    // Try to get user info from token if provided
     const authHeader = req.headers.authorization;
+    let userId = null;
+    
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret-key-change-in-production");
-        console.log(`User ${decoded.userId} signed out successfully`);
+        userId = decoded.userId;
+        console.log(`User ${userId} signing out`);
       } catch (tokenError) {
-        // Token is invalid or expired, but that's okay for signout
-        console.log("Signing out with invalid/expired token");
+        console.log("Signing out with invalid/expired token - this is okay");
       }
+    } else {
+      console.log("Signing out without token - this is okay");
     }
 
     // In a production app, you might want to:
     // 1. Add the token to a blacklist/revoked tokens list
     // 2. Clear any server-side sessions
     // 3. Log the signout event for security purposes
+    
+    if (userId) {
+      // Update last_login or add signout timestamp if needed
+      try {
+        const user = await User.findByPk(userId);
+        if (user) {
+          console.log(`Successfully signed out user: ${user.email}`);
+        }
+      } catch (userError) {
+        console.log("Could not find user for signout logging, but continuing");
+      }
+    }
 
     return res.json({
       success: true,
@@ -226,11 +241,11 @@ const signOut = async (req, res, next) => {
     });
   } catch (error) {
     console.error("SignOut Error:", error);
-    // Even if there's an error, we should still return success
-    // because the client will clear local storage anyway
+    // Even if there's an error, return success for signout
+    // The client should clear local storage regardless
     return res.json({
       success: true,
-      message: "Sign out completed",
+      message: "Sign out completed (with errors)",
     });
   }
 };

@@ -4,7 +4,7 @@ import {
   GoogleSignin,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 // Configure Google Sign-In
 GoogleSignin.configure({
@@ -55,25 +55,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     checkAuthState();
   }, []);
 
+  // Setup axios interceptor
   useEffect(() => {
-    // Interceptor để tự động đăng xuất khi gặp 401
-    const interceptor = axios.interceptors.response.use(
-      response => response,
-      async error => {
-        if (error.response && error.response.status === 401) {
+    const requestInterceptor = axios.interceptors.request.use(
+      async (config) => {
+        const token = await AsyncStorage.getItem("token");
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    const responseInterceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error: AxiosError) => {
+        if (error.response?.status === 401) {
+          console.log("Token expired, signing out...");
           try {
-            await signOut();
+            await clearAuthData();
+            setUser(null);
           } catch (e) {
-            // ignore
+            console.error("Error during auto signout:", e);
           }
         }
         return Promise.reject(error);
       }
     );
+
     return () => {
-      axios.interceptors.response.eject(interceptor);
+      axios.interceptors.request.eject(requestInterceptor);
+      axios.interceptors.response.eject(responseInterceptor);
     };
   }, []);
+
+  const clearAuthData = async () => {
+    try {
+      await AsyncStorage.multiRemove(['user', 'token', 'userToken', 'userData', 'googleToken']);
+      delete axios.defaults.headers.common["Authorization"];
+      console.log("Auth data cleared successfully");
+    } catch (error) {
+      console.error("Error clearing auth data:", error);
+    }
+  };
 
   const checkAuthState = async () => {
     try {
@@ -81,12 +106,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const token = await AsyncStorage.getItem("token");
 
       if (userData && token) {
-        // Set axios default header
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-        setUser(JSON.parse(userData));
+        // Verify token is still valid by making a test request
+        try {
+          const response = await axios.get(`${API_BASE_URL}/users/profile`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (response.data.success) {
+            setUser(JSON.parse(userData));
+          } else {
+            await clearAuthData();
+          }
+        } catch (error) {
+          console.log("Token validation failed, clearing auth data");
+          await clearAuthData();
+        }
+      } else {
+        await clearAuthData();
       }
     } catch (error) {
       console.error("Error checking auth state:", error);
+      await clearAuthData();
     } finally {
       setIsLoading(false);
     }
@@ -106,9 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // Store user data and token
         await AsyncStorage.setItem("user", JSON.stringify(userData));
         await AsyncStorage.setItem("token", token);
-
-        // Set default axios header for future requests
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
         setUser(userData);
         return true;
@@ -155,9 +192,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         await AsyncStorage.setItem("user", JSON.stringify(userData));
         await AsyncStorage.setItem("token", token);
 
-        // Set default axios header for future requests
-        axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
         setUser(userData);
         return true;
       }
@@ -199,15 +233,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         });
 
         if (response.data.success) {
-          const userData = response.data.user;
-          const token = response.data.token;
+          const userData = response.data.data.user;
+          const token = response.data.data.token;
 
           // Store user data and token
           await AsyncStorage.setItem("user", JSON.stringify(userData));
           await AsyncStorage.setItem("token", token);
-
-          // Set default axios header for future requests
-          axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
           setUser(userData);
           return true;
@@ -231,35 +262,51 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const signOut = async () => {
-    let backendError = null;
+    console.log("Starting sign out process...");
+    
     try {
-      // Call the backend signout endpoint
-      await axios.post(`${API_BASE_URL}/auth/signout`);
-    } catch (error) {
-      backendError = error;
-      console.error("Sign out error (backend):", error);
-    }
-    // Google sign out (không critical)
-    try {
-      const currentUser = await GoogleSignin.getCurrentUser();
-      if (currentUser) {
-        await GoogleSignin.signOut();
+      // Get current token for backend signout
+      const token = await AsyncStorage.getItem("token");
+      
+      if (token) {
+        try {
+          // Call the backend signout endpoint
+          await axios.post(`${API_BASE_URL}/auth/signout`, {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log("Backend signout successful");
+        } catch (backendError) {
+          console.warn("Backend signout failed, but continuing with local cleanup:", backendError);
+        }
       }
-    } catch (googleError) {
-      console.log("Google sign out error (non-critical):", googleError);
-    }
-    // Xóa tất cả các key liên quan
-    try {
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.multiRemove(['user', 'token', 'userToken', 'userData', 'googleToken']);
-      delete axios.defaults.headers.common["Authorization"];
+      
+      // Google sign out (non-critical)
+      try {
+        const currentUser = await GoogleSignin.getCurrentUser();
+        if (currentUser) {
+          await GoogleSignin.signOut();
+          console.log("Google signout successful");
+        }
+      } catch (googleError) {
+        console.warn("Google sign out error (non-critical):", googleError);
+      }
+      
+      // Clear local storage
+      await clearAuthData();
       setUser(null);
-      console.log("Sign out cleanup done");
-    } catch (cleanupError) {
-      console.error("Error during cleanup:", cleanupError);
-    }
-    if (backendError) {
-      throw backendError;
+      
+      console.log("Sign out completed successfully");
+      
+    } catch (error) {
+      console.error("Critical sign out error:", error);
+      // Even if there's an error, try to clear local data
+      try {
+        await clearAuthData();
+        setUser(null);
+      } catch (cleanupError) {
+        console.error("Failed to clear local data:", cleanupError);
+      }
+      throw error;
     }
   };
 

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
 // const API_BASE_URL = "http://10.0.2.2:3000/api"; // For Android emulator
 const API_BASE_URL = "http://localhost:3000/api"; // For iOS simulator
@@ -86,15 +86,26 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     saveProjects();
   }, [projects]);
 
-  const loadTasks = async () => {
+  const makeAuthenticatedRequest = async (requestFn: () => Promise<any>) => {
     try {
       const token = await AsyncStorage.getItem("token");
-      console.log("[TaskContext] Token when loading tasks:", token); // Debug log
-      const response = await axios.get(`${API_BASE_URL}/tasks`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+      return await requestFn();
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 401) {
+        console.log("Authentication failed, falling back to local storage");
+        throw new Error("Authentication failed");
+      }
+      throw error;
+    }
+  };
+  const loadTasks = async () => {
+    try {
+      const response = await makeAuthenticatedRequest(() => 
+        axios.get(`${API_BASE_URL}/tasks`)
+      );
 
       if (response.data.success && Array.isArray(response.data.data)) {
         const validTasks = response.data.data.filter((task: any) =>
@@ -102,6 +113,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
         );
         setTasks(validTasks);
         await AsyncStorage.setItem("tasks", JSON.stringify(validTasks));
+        console.log(`Loaded ${validTasks.length} tasks from backend`);
       } else {
         throw new Error("Backend fetch failed");
       }
@@ -116,8 +128,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
             ? parsedTasks.filter((task: any) => task && task.startDate && task.title)
             : [];
           setTasks(validTasks);
+          console.log(`Loaded ${validTasks.length} tasks from local storage`);
         } else {
           setTasks([]); // Nếu không có gì trong local storage, set mảng rỗng
+          console.log("No tasks found in local storage");
         }
       } catch (localError) {
         console.error("Error loading tasks from local storage:", localError);
@@ -128,9 +142,27 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loadProjects = async () => {
     try {
+      const response = await makeAuthenticatedRequest(() => 
+        axios.get(`${API_BASE_URL}/projects`)
+      );
+
+      if (response.data.success && Array.isArray(response.data.data)) {
+        setProjects(response.data.data);
+        await AsyncStorage.setItem("projects", JSON.stringify(response.data.data));
+        console.log(`Loaded ${response.data.data.length} projects from backend`);
+        return;
+      }
+    } catch (error) {
+      console.error("Error loading projects from backend:", error);
+    }
+    
+    // Fallback to local storage
+    try {
       const savedProjects = await AsyncStorage.getItem("projects");
       if (savedProjects) {
         setProjects(JSON.parse(savedProjects));
+      } else {
+        console.log("Using default projects");
       }
     } catch (error) {
       console.error("Error loading projects:", error);
@@ -172,17 +204,14 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Try to create task on backend
-      const token = await AsyncStorage.getItem("token");
-      console.log("[TaskContext] Token when adding task:", token); // Debug log
-      const response = await axios.post(`${API_BASE_URL}/tasks`, taskData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await makeAuthenticatedRequest(() => 
+        axios.post(`${API_BASE_URL}/tasks`, taskData)
+      );
 
-      if (response.data.success) {
-        const newTask = response.data.task;
+      if (response.data.success && response.data.data) {
+        const newTask = response.data.data;
         setTasks((prev) => [...prev, newTask]);
+        console.log("Task created successfully on backend");
       } else {
         throw new Error("Backend creation failed");
       }
@@ -195,25 +224,23 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
         createdAt: new Date().toISOString(),
       };
       setTasks((prev) => [...prev, newTask]);
+      console.log("Task created locally as fallback");
     }
   };
 
   const updateTask = async (id: string, updates: Partial<Task>) => {
     try {
       // Try to update task on backend
-      const token = await AsyncStorage.getItem("token");
-      console.log("[TaskContext] Token when updating task:", token); // Debug log
-      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await makeAuthenticatedRequest(() => 
+        axios.put(`${API_BASE_URL}/tasks/${id}`, updates)
+      );
 
-      if (response.data.success) {
-        const updatedTask = response.data.task;
+      if (response.data.success && response.data.data) {
+        const updatedTask = response.data.data;
         setTasks((prev) =>
           prev.map((task) => (task.id === id ? updatedTask : task)),
         );
+        console.log("Task updated successfully on backend");
       } else {
         throw new Error("Backend update failed");
       }
@@ -223,22 +250,20 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       setTasks((prev) =>
         prev.map((task) => (task.id === id ? { ...task, ...updates } : task)),
       );
+      console.log("Task updated locally as fallback");
     }
   };
 
   const deleteTask = async (id: string) => {
     try {
       // Try to delete task on backend
-      const token = await AsyncStorage.getItem("token");
-      console.log("[TaskContext] Token when deleting task:", token); // Debug log
-      const response = await axios.delete(`${API_BASE_URL}/tasks/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await makeAuthenticatedRequest(() => 
+        axios.delete(`${API_BASE_URL}/tasks/${id}`)
+      );
 
       if (response.data.success) {
         setTasks((prev) => prev.filter((task) => task.id !== id));
+        console.log("Task deleted successfully on backend");
       } else {
         throw new Error("Backend deletion failed");
       }
@@ -246,6 +271,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       console.error("Error deleting task on backend:", error);
       // Fallback to local deletion
       setTasks((prev) => prev.filter((task) => task.id !== id));
+      console.log("Task deleted locally as fallback");
     }
   };
 
@@ -254,24 +280,21 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       const task = tasks.find((t) => t.id === id);
       if (!task) return;
 
-      const token = await AsyncStorage.getItem("token");
-      console.log("[TaskContext] Token when toggling task complete:", token); // Debug log
       const updates = {
         isCompleted: !task.isCompleted,
         completedAt: !task.isCompleted ? new Date().toISOString() : undefined,
       };
 
       // Try to update task on backend
-      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await makeAuthenticatedRequest(() => 
+        axios.put(`${API_BASE_URL}/tasks/${id}`, updates)
+      );
 
       if (response.data.success) {
         setTasks((prev) =>
           prev.map((task) => (task.id === id ? { ...task, ...updates } : task)),
         );
+        console.log("Task completion toggled successfully on backend");
       } else {
         throw new Error("Backend update failed");
       }
@@ -291,6 +314,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
             : task,
         ),
       );
+      console.log("Task completion toggled locally as fallback");
     }
   };
 
