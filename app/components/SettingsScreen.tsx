@@ -10,20 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
 } from "react-native";
-import {
-  ArrowLeft,
-  Moon,
-  Sun,
-  Monitor,
-  Bell,
-  Palette,
-  User,
-  Shield,
-  HelpCircle,
-  X,
-  Save,
-  LogOut,
-} from "lucide-react-native";
+import { ArrowLeft, Moon, Sun, Monitor, Bell, Palette, User, Shield, CircleHelp as HelpCircle, X, Save, LogOut } from "lucide-react-native";
 import { useTheme } from "../contexts/ThemeContext";
 import { useNotification } from "../contexts/NotificationContext";
 import { useAuth } from "../contexts/AuthContext";
