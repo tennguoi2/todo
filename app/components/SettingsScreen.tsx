@@ -61,8 +61,6 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
   };
 
   const handleSignOut = async () => {
-    if (isSigningOut) return; // Prevent multiple signout attempts
-
     Alert.alert("Đăng xuất", "Bạn có chắc chắn muốn đăng xuất?", [
       { text: "Hủy", style: "cancel" },
       {
@@ -70,32 +68,15 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
         style: "destructive",
         onPress: async () => {
           setIsSigningOut(true);
-          console.log("Starting sign out process...");
 
           try {
-            console.log("Calling signOut function...");
             await signOut();
-            console.log("Sign out successful");
             // Success - user will be redirected to login screen automatically
-          } catch (error) {
-            console.error("Sign out error details:", error);
-            console.error("Error message:", error.message);
-            console.error("Error stack:", error.stack);
-
-            // Show more detailed error information
-            const errorMessage = error.message || "Không thể đăng xuất. Vui lòng thử lại.";
-            
+            console.error("Sign out error:", error);
             Alert.alert(
-              "Lỗi đăng xuất",
-              `Chi tiết lỗi: ${errorMessage}\n\nBạn có muốn thử đăng xuất cưỡng bức không?`,
-              [
-                { text: "Hủy", style: "cancel" },
-                { 
-                  text: "Đăng xuất cưỡng bức", 
-                  style: "destructive",
-                  onPress: () => forceSignOut()
-                }
-              ]
+              "Lỗi", 
+              "Không thể đăng xuất. Vui lòng thử lại.",
+              [{ text: "OK" }]
             );
           } finally {
             setIsSigningOut(false);
@@ -103,29 +84,6 @@ const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
         },
       },
     ]);
-  };
-
-  const forceSignOut = async () => {
-    try {
-      console.log("Force signing out...");
-      // Try to clear local storage manually if signOut fails
-      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-      await AsyncStorage.multiRemove(['userToken', 'userData', 'googleToken']);
-      
-      // Force reload the app or navigate to login
-      Alert.alert(
-        "Đăng xuất thành công",
-        "Vui lòng khởi động lại ứng dụng.",
-        [{ text: "OK" }]
-      );
-    } catch (error) {
-      console.error("Force sign out error:", error);
-      Alert.alert(
-        "Lỗi nghiêm trọng",
-        "Không thể đăng xuất. Vui lòng xóa và cài đặt lại ứng dụng.",
-        [{ text: "OK" }]
-      );
-    }
   };
 
   return (

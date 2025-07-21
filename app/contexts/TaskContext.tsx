@@ -86,31 +86,33 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     saveProjects();
   }, [projects]);
 
-  const makeAuthenticatedRequest = async (requestFn: () => Promise<any>) => {
+  const loadTasks = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
       if (!token) {
         throw new Error("No authentication token found");
       }
-      return await requestFn();
-    } catch (error) {
-      if (error instanceof AxiosError && error.response?.status === 401) {
-        console.log("Authentication failed, falling back to local storage");
-        throw new Error("Authentication failed");
-      }
-      throw error;
-    }
-  };
-  const loadTasks = async () => {
-    try {
-      const response = await makeAuthenticatedRequest(() => 
-        axios.get(`${API_BASE_URL}/tasks`)
-      );
+      
+      const response = await axios.get(`${API_BASE_URL}/tasks`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (response.data.success && Array.isArray(response.data.data)) {
-        const validTasks = response.data.data.filter((task: any) =>
-          task && task.startDate && task.title
-        );
+        const backendTasks = response.data.data;
+        // Map backend fields to frontend fields
+        const validTasks = backendTasks
+          .filter((task: any) => task && (task.startDate || task.start_date) && task.title)
+          .map((task: any) => ({
+            ...task,
+            startDate: task.startDate || task.start_date,
+            dueDate: task.dueDate || task.due_date,
+            isCompleted: task.isCompleted !== undefined ? task.isCompleted : task.is_completed,
+            projectId: task.projectId || task.project_id,
+            isRecurring: task.isRecurring !== undefined ? task.isRecurring : task.is_recurring,
+            recurringType: task.recurringType || task.recurring_type,
+            completedAt: task.completedAt || task.completed_at,
+            createdAt: task.createdAt || task.created_at
+          }));
         setTasks(validTasks);
         await AsyncStorage.setItem("tasks", JSON.stringify(validTasks));
         console.log(`Loaded ${validTasks.length} tasks from backend`);
@@ -142,9 +144,14 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const loadProjects = async () => {
     try {
-      const response = await makeAuthenticatedRequest(() => 
-        axios.get(`${API_BASE_URL}/projects`)
-      );
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+      
+      const response = await axios.get(`${API_BASE_URL}/projects`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (response.data.success && Array.isArray(response.data.data)) {
         setProjects(response.data.data);
@@ -204,12 +211,25 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       // Try to create task on backend
-      const response = await makeAuthenticatedRequest(() => 
-        axios.post(`${API_BASE_URL}/tasks`, taskData)
-      );
+      const token = await AsyncStorage.getItem("token");
+      const response = await axios.post(`${API_BASE_URL}/tasks`, taskData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (response.data.success && response.data.data) {
-        const newTask = response.data.data;
+        const backendTask = response.data.data;
+        // Map backend fields to frontend fields
+        const newTask = {
+          ...backendTask,
+          startDate: backendTask.startDate || backendTask.start_date,
+          dueDate: backendTask.dueDate || backendTask.due_date,
+          isCompleted: backendTask.isCompleted !== undefined ? backendTask.isCompleted : backendTask.is_completed,
+          projectId: backendTask.projectId || backendTask.project_id,
+          isRecurring: backendTask.isRecurring !== undefined ? backendTask.isRecurring : backendTask.is_recurring,
+          recurringType: backendTask.recurringType || backendTask.recurring_type,
+          completedAt: backendTask.completedAt || backendTask.completed_at,
+          createdAt: backendTask.createdAt || backendTask.created_at
+        };
         setTasks((prev) => [...prev, newTask]);
         console.log("Task created successfully on backend");
       } else {
@@ -231,14 +251,27 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const updateTask = async (id: string, updates: Partial<Task>) => {
     try {
       // Try to update task on backend
-      const response = await makeAuthenticatedRequest(() => 
-        axios.put(`${API_BASE_URL}/tasks/${id}`, updates)
-      );
+      const token = await AsyncStorage.getItem("token");
+      const response = await axios.put(`${API_BASE_URL}/tasks/${id}`, updates, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (response.data.success && response.data.data) {
         const updatedTask = response.data.data;
         setTasks((prev) =>
-          prev.map((task) => (task.id === id ? updatedTask : task)),
+          prev.map((task) => (task.id === id ? {
+            ...task,
+            ...updatedTask,
+            // Map backend fields to frontend fields
+            startDate: updatedTask.startDate || updatedTask.start_date,
+            dueDate: updatedTask.dueDate || updatedTask.due_date,
+            isCompleted: updatedTask.isCompleted !== undefined ? updatedTask.isCompleted : updatedTask.is_completed,
+            projectId: updatedTask.projectId || updatedTask.project_id,
+            isRecurring: updatedTask.isRecurring !== undefined ? updatedTask.isRecurring : updatedTask.is_recurring,
+            recurringType: updatedTask.recurringType || updatedTask.recurring_type,
+            completedAt: updatedTask.completedAt || updatedTask.completed_at,
+            createdAt: updatedTask.createdAt || updatedTask.created_at
+          } : task)),
         );
         console.log("Task updated successfully on backend");
       } else {
@@ -257,9 +290,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
   const deleteTask = async (id: string) => {
     try {
       // Try to delete task on backend
-      const response = await makeAuthenticatedRequest(() => 
-        axios.delete(`${API_BASE_URL}/tasks/${id}`)
-      );
+      const token = await AsyncStorage.getItem("token");
+      const response = await axios.delete(`${API_BASE_URL}/tasks/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (response.data.success) {
         setTasks((prev) => prev.filter((task) => task.id !== id));
@@ -280,19 +314,20 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
       const task = tasks.find((t) => t.id === id);
       if (!task) return;
 
-      const updates = {
-        isCompleted: !task.isCompleted,
-        completedAt: !task.isCompleted ? new Date().toISOString() : undefined,
-      };
-
       // Try to update task on backend
-      const response = await makeAuthenticatedRequest(() => 
-        axios.put(`${API_BASE_URL}/tasks/${id}`, updates)
-      );
+      const token = await AsyncStorage.getItem("token");
+      const response = await axios.post(`${API_BASE_URL}/tasks/${id}/complete`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
       if (response.data.success) {
+        const updatedTask = response.data.data;
         setTasks((prev) =>
-          prev.map((task) => (task.id === id ? { ...task, ...updates } : task)),
+          prev.map((task) => (task.id === id ? {
+            ...task,
+            isCompleted: updatedTask.isCompleted !== undefined ? updatedTask.isCompleted : updatedTask.is_completed,
+            completedAt: updatedTask.completedAt || updatedTask.completed_at
+          } : task)),
         );
         console.log("Task completion toggled successfully on backend");
       } else {
@@ -301,15 +336,16 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error("Error toggling task completion on backend:", error);
       // Fallback to local update
+      const updates = {
+        isCompleted: !task.isCompleted,
+        completedAt: !task.isCompleted ? new Date().toISOString() : undefined,
+      };
       setTasks((prev) =>
         prev.map((task) =>
           task.id === id
             ? {
                 ...task,
-                isCompleted: !task.isCompleted,
-                completedAt: !task.isCompleted
-                  ? new Date().toISOString()
-                  : undefined,
+                ...updates
               }
             : task,
         ),

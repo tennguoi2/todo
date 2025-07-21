@@ -208,7 +208,10 @@ const signOut = async (req, res, next) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback-secret-key-change-in-production");
+        const decoded = jwt.verify(
+          token, 
+          process.env.JWT_SECRET || "fallback-secret-key-change-in-production"
+        );
         userId = decoded.userId;
         console.log(`User ${userId} signing out`);
       } catch (tokenError) {
@@ -241,11 +244,13 @@ const signOut = async (req, res, next) => {
     });
   } catch (error) {
     console.error("SignOut Error:", error);
-    // Even if there's an error, return success for signout
-    // The client should clear local storage regardless
+    // Return error for proper error handling on client side
     return res.json({
-      success: true,
-      message: "Sign out completed (with errors)",
+      success: false,
+      error: {
+        code: "SIGNOUT_ERROR",
+        message: "Sign out failed",
+      },
     });
   }
 };

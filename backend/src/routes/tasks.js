@@ -13,7 +13,6 @@ router.get("/test", (req, res) => {
 try {
   const {
     getTasks,
-    getTask,
     createTask,
     updateTask,
     deleteTask,
@@ -28,11 +27,10 @@ try {
   router.get("/", getTasks);
   router.post("/", createTask);
   router.get("/statistics", getTaskStatistics);
-  router.get("/search", getTasks); // Search tasks using query parameters
-  router.get("/:id", getTask);
   router.put("/:id", updateTask);
   router.delete("/:id", deleteTask);
   router.post("/:id/complete", toggleTaskComplete);
+  router.get("/:id", getTasks); // Get specific task
 } catch (error) {
   console.error("Error loading task controller:", error.message);
 

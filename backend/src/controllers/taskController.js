@@ -390,6 +390,7 @@ const toggleTaskComplete = async (req, res, next) => {
       message: "Task completion status updated successfully",
     });
   } catch (error) {
+    console.error("Toggle task complete error:", error);
     next(error);
   }
 };

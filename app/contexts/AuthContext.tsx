@@ -308,6 +308,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       throw error;
     }
+        console.error("Failed to clear local data:", cleanupError);
+      }
+      throw error;
+    }
   };
 
   return (

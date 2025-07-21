@@ -1,5 +1,12 @@
 const errorHandler = (err, req, res, next) => {
-  console.error("Error:", err);
+  console.error("Error details:", {
+    message: err.message,
+    stack: err.stack,
+    url: req.url,
+    method: req.method,
+    body: req.body,
+    headers: req.headers
+  });
 
   // Sequelize validation errors
   if (err.name === "SequelizeValidationError") {
@@ -51,6 +58,17 @@ const errorHandler = (err, req, res, next) => {
       error: {
         code: "INVALID_TOKEN",
         message: "Invalid token",
+      },
+    });
+  }
+
+  // Database connection errors
+  if (err.name === "SequelizeConnectionError") {
+    return res.status(503).json({
+      success: false,
+      error: {
+        code: "DATABASE_ERROR",
+        message: "Database connection failed",
       },
     });
   }
